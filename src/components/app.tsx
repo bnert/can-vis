@@ -9,13 +9,38 @@ if ((module as any).hot) {
     require("preact/debug");
 }
 
+
+let colors = {
+  current: 'aquamarine',
+  available: {
+    aquamarine: 'aquamarine',
+    green: 'green',
+    purple: 'purple',
+    red: 'red',
+  }
+}
+
+
 export default class App extends Component {
     public currentUrl?: string;
     public handleRoute = (e: RouterOnChangeArgs) => {
         this.currentUrl = e.url;
     };
 
-    public render() {
+    state = {
+      audioNodes: Object.values(colors.available)
+        .map((el: any, i: number) => {
+          return {
+            id: `ch-${1}`,
+            data: {
+              color: el,
+              wavType: 'sine' // For now
+            }
+          }
+      })
+    }
+
+    public render(_ : any, { audioNodes }: any) {
         return (
           <div>
             <Canvas 
@@ -25,7 +50,17 @@ export default class App extends Component {
                 width: 700,
               }}
             />
-            <AudioNode id={"ch-1"} />
+            <div
+              id="mixer"
+              style={{
+                display: 'flex',
+                flexDirection: 'row'
+              }}
+            >
+              {audioNodes.map((el: any) => {
+                return <AudioNode {...el} />
+              })}
+            </div>
           </div>
         );
     }
