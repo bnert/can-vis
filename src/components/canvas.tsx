@@ -1,6 +1,5 @@
 import { Component, h } from "preact";
-
-import AudioNode from './audio-node';
+import soundScheduler from '../util/scheduler';
 
 let store = {
   canvas: {
@@ -12,7 +11,7 @@ let store = {
   },
 }
 
-const colors = {
+const colorsWaveTypeMap = {
   red: [244, 36, 36, 1]
 }
 
@@ -26,23 +25,26 @@ interface CanvasMeta {
 interface Props{
   id: string;
   canvas: CanvasMeta;
+  publish(channel: string, payload: any): void;
 }
+
 export default class Canvas extends Component<Props> {
   // public height: string = store.canvas.height;
   // public width: string = store.canvas.width;
   public state = {
     mouseDown: false,
-    colors: {
-      current: 'aquamarine',
+    colorsWaveTypeMap: {
+      current: 'sine',
       available: {
-        aquamarine: 'aquamarine',
-        green: 'green',
-        purple: 'purple',
-        red: 'red',
+        sine: 'aquamarine',
+        traingle: 'green',
+        square: 'purple',
+        sawtooth: 'red',
       }
     }
   }
   private ctx: any;
+  private scheduling: any;
 
   // Public
 
@@ -51,6 +53,7 @@ export default class Canvas extends Component<Props> {
     this.ctx.beginPath();
     this.ctx.moveTo(e.clientX, e.clientY);
     this.paint(e.clientX, e.clientY);
+    this.createAudioNode();
   }
 
   public handleMouseUp = () => {
@@ -65,15 +68,12 @@ export default class Canvas extends Component<Props> {
   }
 
   // Private
-
   private paint = (x: number, y: number) => {
     if(!this.ctx) return;
-    const { current }: { 
-      current: string
-    } = this.state.colors;
+    const { current, available }: any = this.state.colorsWaveTypeMap;
 
     this.ctx.lineTo(x, y);
-    this.ctx.strokeStyle = current;
+    this.ctx.strokeStyle = available[current];
     this.ctx.lineWidth = 4;
     this.ctx.stroke();
   }
@@ -83,29 +83,45 @@ export default class Canvas extends Component<Props> {
     const target: any = e.target;
     
     target && target.value ?
-      this.setState({ ...this.state, colors: { 
+      this.setState({ ...this.state, colorsWaveTypeMap: { 
         current: target.value,
-        available: this.state.colors.available
+        available: this.state.colorsWaveTypeMap.available
       }}):
       null;
   }
 
+  initFreq = 1000;
+
   private printCanvas = () => {
-    const { height, width } = this.props.canvas;
-    const ctx = this.ctx.getImageData(0, 0, height, width);
-    let pixelBuff: number[] = [];
-    console.log(ctx.data.filter((el: number, i: number): boolean => {
-      if (el > 0 ) {
-        pixelBuff.push(i);
-        return true;
-      }
-      return false
-    }))
-    console.log(pixelBuff);
+    // const { height, width } = this.props.canvas;
+    // const ctx = this.ctx.getImageData(0, 0, height, width);
+    // let pixelBuff: number[] = [];
+    // console.log(ctx.data.filter((el: number, i: number): boolean => {
+    //   if (el > 0 ) {
+    //     pixelBuff.push(i);
+    //     return true;
+    //   }
+    //   return false
+    // }))
+    // console.log(pixelBuff);
+    this.props.publish('ch-1', { action: 'UPDATE_FREQ', data: this.initFreq})
+    this.initFreq -= 100;
   }
 
-  // Life - cylce
+  private createAudioNode = () => {
+    const { current } = this.state.colorsWaveTypeMap;
+    // Shim until state can by dynamic
+    const waves: any = {
+      sine: 'ch-0',
+      traingle: 'ch-1',
+      square: 'ch-2',
+      sawtooth: 'ch-3'
+    };
 
+    this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
+  }
+
+  // Lifecylce
   componentDidMount() {
     let canvasObj: any = document.getElementById(this.props.id);
     if(canvasObj) {
@@ -114,6 +130,14 @@ export default class Canvas extends Component<Props> {
       this.ctx = canvasObj.getContext('2d');
       this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
     }
+    this.scheduling = soundScheduler({
+      canvasCtx: canvasObj.getContext('2d'),
+      canvasWidth: store.canvas.width,
+      canvasHeight: store.canvas.height,
+      samplingSliceWidth: 10,
+    });
+
+    this.scheduling.start();
   }
 
   // Otherwise canvas will never render
@@ -125,7 +149,7 @@ export default class Canvas extends Component<Props> {
   public render({ id, canvas }: Props) {
     const { available }: {
       available: {}
-    } = this.state.colors;
+    } = this.state.colorsWaveTypeMap;
     
     return (
       <div>
@@ -141,10 +165,13 @@ export default class Canvas extends Component<Props> {
           onMouseMove={this.handleMouseMove}
         ></canvas>
         <select onChange={this.handleSelectChange}>
-          {Object.values(available).map((el) => <option value={el.toString()}>{el}</option>)}
+          {Object.entries(available).map(([ waveType, color ]) => <option value={waveType}>{color}</option>)}
         </select>
         <div>
           <button onClick={this.printCanvas}>Show canvas data</button>
+          <button onClick={() => {
+            this.scheduling.cancel();
+          }}>Cancel</button>
         </div>
       </div>
     )

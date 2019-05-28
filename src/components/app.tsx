@@ -1,5 +1,6 @@
 import { Component, h } from "preact";
 import { Route, Router, RouterOnChangeArgs } from "preact-router";
+import pubsub from '../util/pubsub';
 
 import Canvas from './canvas';
 import AudioNode from './audio-node';
@@ -11,12 +12,12 @@ if ((module as any).hot) {
 
 
 let colors = {
-  current: 'aquamarine',
+  current: 'sine',
   available: {
-    aquamarine: 'aquamarine',
-    green: 'green',
-    purple: 'purple',
-    red: 'red',
+    sine: 'aquamarine',
+    traingle: 'green',
+    square: 'purple',
+    sawtooth: 'red',
   }
 }
 
@@ -27,17 +28,77 @@ export default class App extends Component {
         this.currentUrl = e.url;
     };
 
+    // Application constants
+    maxFreq: number = 6000;
+    // Kind of arbitrary sizes... for now
+    canvasWidth: number = 1080;
+    canvasHeight: number = 720;
+
+    // General state object
     state = {
-      audioNodes: Object.values(colors.available)
-        .map((el: any, i: number) => {
+      audioNodes: Object.entries(colors.available)
+        .map(([ waveType, color ], i: number) => {
           return {
-            id: `ch-${1}`,
+            id: `ch-${i}`,
             data: {
-              color: el,
-              wavType: 'sine' // For now
+              color,
+              waveType
             }
           }
       })
+    }
+
+    /** Instantiate a new pubsub for updates */
+    ps = pubsub();
+
+    /**   
+     * For making sure each child node is available
+     * before pusing any data to each of them
+     */
+    allNodesStatus: Array<any> = [];
+
+    pushReadyNode = (nodeData: any) => {
+      this.allNodesStatus.push(nodeData);
+    }
+
+    checkAllNodesMounted = () => {
+      if(this.allNodesStatus.length === this.state.audioNodes.length) {
+        return true;
+      }
+      return false;
+    }
+
+    pollChildMounted = ({ childId, ready }: { childId: string, ready: boolean }) => {
+      this.pushReadyNode({ childId, ready });
+      let allNodesStat = this.checkAllNodesMounted()
+      
+      allNodesStat ?
+        console.log("All nodes mounted") :
+        console.log("All nodes not mounted");
+
+      console.log('channles');
+      this.ps.chs();
+      if(allNodesStat) {
+        this.allNodesStatus.forEach(el => {
+          console.log("Element ready", el);
+          this.ps.pub(el.childId, {msg: `Ready msg for ${el.childId}`});
+        });
+      }
+    }
+
+    // This is to update a child audio node with
+    // latest data for what frequency to play
+    pollToUpdateChild = () => {
+
+    }
+
+    /************************************* */
+    componentDidMount() {
+      console.log('All', this.checkAllNodesMounted());
+      this.ps.chs().forEach(ch => {
+        this.ps.pub(ch, { msg: "Hello from comp did mount app"})
+      })
+
     }
 
     public render(_ : any, { audioNodes }: any) {
@@ -49,6 +110,7 @@ export default class App extends Component {
                 height: 500,
                 width: 700,
               }}
+              publish={this.ps.pub}
             />
             <div
               id="mixer"
@@ -58,7 +120,11 @@ export default class App extends Component {
               }}
             >
               {audioNodes.map((el: any) => {
-                return <AudioNode {...el} />
+                return <AudioNode 
+                  {...el} 
+                  mountFn={this.pollChildMounted} 
+                  subscription={this.ps.sub}
+                />
               })}
             </div>
           </div>

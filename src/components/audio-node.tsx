@@ -2,13 +2,15 @@ import { Component, h } from "preact";
 
 interface IData {
   color: string;
-  wavType?: string;
+  waveType?: string;
 }
 
 interface IProps {
-  id: string | number;
+  id: string;
   startingHz?: number;
   data: IData;
+  mountFn(obj: any): void;
+  subscription(channel: string, pubFn: (payload: any) => void): void;
 }
 
 
@@ -20,7 +22,7 @@ interface IState {
 }
 
 interface IOsc {
-  inst: OscillatorNode;
+  inst: OscillatorNode[];
   controls: any;
   fxChain: any;
 }
@@ -50,15 +52,15 @@ export default class AudioNode extends Component<IProps> {
   }
 
   osc: IOsc = {
-    inst: this.audioCtx.createOscillator(),
+    inst: [],
     controls: {},
     fxChain: {
       gain: {
+        initValue: this.state.volume,
         fx: this.audioCtx.createGain()
       }
     }
   }
-
 
   handleMuteUnmute = () => {
     const { muted } = this.state;
@@ -68,9 +70,19 @@ export default class AudioNode extends Component<IProps> {
     // If muted is true, future value is false, so connect
     // else ... you know the rest
     if(muted) {
-      this.osc.inst.connect(this.osc.fxChain.gain.fx);
+      this.osc.inst.forEach(el => {
+        el.connect(this.osc.fxChain.gain.fx);
+      })
     } else {
-      this.osc.inst.disconnect();
+      console.log("disconnecting: ", this.props.data.waveType)
+      this.osc.inst.forEach(el => {
+        console.log(el)
+        try {
+          el.disconnect(this.osc.fxChain.gain.fx);
+        } catch(err) {
+          console.log('disconnect error', err);
+        }
+      })
     }
     this.setState({ ...this.state, muted: !muted });
   }
@@ -78,37 +90,80 @@ export default class AudioNode extends Component<IProps> {
   handleVolumeChange = (event: any) => {
     const newVolume = parseFloat(event.target.value);
     const { gain } = this.osc.fxChain;
-    console.log(this.osc.fxChain.gain)
-    console.log(gain, newVolume);
     gain.fx.gain.setValueAtTime(newVolume, this.audioCtx.currentTime);
     this.setState({ ...this.state, volume: newVolume });
   }
 
   // Initializer functions
-  initOsc(props: IProps) {
+  initNewOsc(props: any) {
     let { inst, fxChain } = this.osc;
-    inst.type = (props.data.wavType) as OscillatorType;
+    
+    inst.push(this.audioCtx.createOscillator());
+    const newOscInstIndex = inst.length - 1;
+    inst[newOscInstIndex].type = (props.waveType) as OscillatorType;
+    inst[newOscInstIndex].frequency.value = props.initFreq;
 
     let fx = Object.values(fxChain);
     fx.forEach((fxValue: any, i: number) => {
-      inst.connect(fxValue.fx);
-
+      
+      inst[newOscInstIndex].connect(fxValue.fx);
       if( i === fx.length - 1 ) {
         fxValue.fx.connect(this.audioCtx.destination);
       }
+
     });
-    inst.start();
-    inst.disconnect();
+    
+    inst[newOscInstIndex].start();
+    inst[newOscInstIndex].disconnect();
   }
 
-  // Lifecylce methods
+  // Audio updates
+  handleFreqUpdate = (newFreq: number) => {
+    const { inst } = this.osc;
+    inst[0].frequency.value = newFreq;
+  }
+
+  handleAddNode = (newNodeInitData: any) => {
+    console.log('Creating', this.props.data.waveType, 'node');
+    this.initNewOsc(newNodeInitData);
+  }
+
+  // Channel behavior
+  decideAction = (payload: any) => {
+    const { action, data }: 
+      { 
+        action: string, 
+        data: any
+      } = payload;
+
+    switch(action) {
+      case 'UPDATE_FREQ':
+        this.handleFreqUpdate(data);
+      case 'ADD_NODE':
+        this.handleAddNode({ 
+           ...data, 
+           waveType: this.props.data.waveType,
+           initFreq: 440
+        });
+      default:
+        return;
+    }
+  }
+
+   // Lifecylce methods
   componentDidMount() {
-    this.initOsc(this.props)
+    // this.initNewOsc(this.props)
+
+    const { id, subscription } = this.props;
+
+    subscription(id, (payload) => {
+      console.log(`Recv >>> ${id}:`, payload);
+      this.decideAction(payload);
+    })
+    this.props.mountFn({ childId: this.props.id, ready: true });
   }
 
-
-  public render({ id, data: { color, wavType } }: IProps, state: any) {
-
+  public render({ id, data: { color, waveType } }: IProps, state: any) {
     return (
       <div id={id.toString()} 
         style={{
@@ -123,7 +178,7 @@ export default class AudioNode extends Component<IProps> {
           style={{
             background: color
           }}
-        >{wavType}</h3>
+        >{waveType}</h3>
         <h2>{state.volume}</h2>
         <button
           // Weird, but throws a scope error
@@ -140,14 +195,17 @@ export default class AudioNode extends Component<IProps> {
             transform: 'rotate(-90deg)',
             marginTop: '80px'
           }}
+
           value={state.volume} 
 
           onMouseDown={() => {
             this.setState({ ...this.state, mousedown: true })
           }}
+
           onMouseUp={() => {
             this.setState({ ...this.state, mousedown: false })
           }}
+
           onMouseMove={(ev: MouseEvent) => {
             this.state.mousedown ?
               this.handleVolumeChange(ev) :
