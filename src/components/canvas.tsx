@@ -123,18 +123,23 @@ export default class Canvas extends Component<Props> {
 
   // Lifecylce
   componentDidMount() {
+    let test = true;
     let canvasObj: any = document.getElementById(this.props.id);
     if(canvasObj) {
       canvasObj.width = store.canvas.width;
       canvasObj.height = store.canvas.height;
       this.ctx = canvasObj.getContext('2d');
       this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
+      if(test){
+        this.ctx.fillStyle = 'aquamarine'
+        this.ctx.fillRect(0, 0, 20, 4);
+      }
     }
     this.scheduling = soundScheduler({
       canvasCtx: canvasObj.getContext('2d'),
       canvasWidth: store.canvas.width,
       canvasHeight: store.canvas.height,
-      samplingSliceWidth: 10,
+      samplingSliceWidth: 8,
     });
 
     this.scheduling.start();

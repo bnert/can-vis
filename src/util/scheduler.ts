@@ -96,6 +96,13 @@ const soundScheduler = (
 
   console.log('slices possible:', numOfSlices);
 
+  const compPx = (pxArray: Uint8ClampedArray, i: number) => ({ 
+    r: pxArray[i],
+    g: pxArray[i + 1],
+    b: pxArray[i + 2],
+    a: pxArray[i + 3]
+  })
+
 
   let timeoutId = -1;
   const schedule = () => {
@@ -104,35 +111,34 @@ const soundScheduler = (
     let pixelBuffer = [];
 
     let rowCounter = 0;
-    let rowBounds = samplingSliceWidth * 4 - 1; // ex. 0..39 = 0th row
+    let rowBounds = w * 4; // ex. 0..39 = 0th row
     let colCounter = 0;
+
+    // Pixel data reads:
+    // left -> right, then top -> bottom
+    // so if a canvas ctx was height: 100, width: 200,
+    // then each row would be split up into 200 indices in
+    // the array before getting to the next row.
     for(let i = 0; i < canvData.length; i += 4) {
-      if( i > rowBounds ){
-        rowBounds += 40;
-        rowCounter++;
+      if( i >= rowBounds ){
+        rowBounds += (w * 4);
+        rowCounter += 1;
       }
-      colCounter = i % 10;
+      // Need to have this at the end, in order not to have a wrapping column number
+
+      colCounter = (i / 4) % (w);
       // Skip bcs blank line
       if(canvData[i] === 0) {
         continue;
       }
-      console.log(i, '-> row, col: ', rowCounter, colCounter);
-      console.log('bounds>>>>>>', rowBounds);
-      
 
       pixelBuffer.push({
-        pixelNumber: {
-          row: rowCounter,
-          col: colCounter,
-        },
-        pixelData: [
-          canvData[i],
-          canvData[i + 1],
-          canvData[i + 2],
-          canvData[i + 3],
-        ]
+        x: colCounter,
+        y: rowCounter,
+        px: compPx(canvData, i)
       })
     }
+
     currentSliceStart += samplingSliceWidth;
     console.log('PIXEL BUFFER @', l);
     console.log(currentSampleLocation());
