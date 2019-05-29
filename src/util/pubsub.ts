@@ -40,7 +40,8 @@ function pubsub(init?: IPubSub): IPubSubReturn {
   // Publish to a channel
   function pub(channel = "/", payload: IPubSubPayload) {
     if (!channels[channel]) {
-      throw new Error(`Specified channel: ${channel}, does not exist`);
+      // throw new Error(`Specified channel: ${channel}, does not exist`);
+      channels[channel] = [];
     }
 
     channels[channel].forEach(( channel: any ) => {

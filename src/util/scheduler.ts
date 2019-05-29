@@ -6,30 +6,6 @@ let bandOffset = 10; // 10 px sampling bandOffset
 let currBand = 0;
 let bandLimit = canWidth / bandOffset;
 
-
-// // (700 / 10) => 70 slices throughout canvas
-// // ()
-
-// let currOffset = currBand  
-
-// function sampleData(){
-//   const currentSampleBand = currBand % bandLimit;
-//   console.log('Current Sample Band:', currentSampleBand);
-  
-//   // Left, top, width, height
-//   let ctxData = document.getElementById('can-vis').getContext('2d').getImageData(currentSampleBand, 0, bandOffset, 500);
-//   console.log('Sampled (', currentSampleBand, 0, bandOffset, 500, ')');
-//   console.log(ctxData);
-//   currBand += bandOffset;
-// }
-
-// function schedule() {
-//   sampleData();
-//   // setTimeout(schedule, freq)
-// }
-
-// schedule();
-
 function browserChecks() {
   if( !document || !window ) {
     return false;
@@ -45,7 +21,8 @@ interface IScheduler {
   canvasWidth: number;
   canvasHeight: number;
   samplingSliceWidth: number;
-  samplingFreq?: number;
+  samplingFreq: number;
+  pollFn(freqData: any[]): void;
 }
 
 interface ISchedulerReturn {
@@ -75,12 +52,12 @@ const soundScheduler = (
   }
   
   const {
-    audioCtx,
     canvasCtx,
     canvasWidth,
     canvasHeight,
     samplingSliceWidth,
-    samplingFreq
+    samplingFreq,
+    pollFn
   } = schedulerSettings;
 
   // This will be the number of times we find pixels
@@ -108,7 +85,7 @@ const soundScheduler = (
   const schedule = () => {
     const [l, t, w, h] = currentSampleLocation();
     const canvData = canvasCtx.getImageData(l, t, w, h).data;
-    let pixelBuffer = [];
+    let pixelBuffer: Array<any> = [];
 
     let rowCounter = 0;
     let rowBounds = w * 4; // ex. 0..39 = 0th row
@@ -138,17 +115,22 @@ const soundScheduler = (
         px: compPx(canvData, i)
       })
     }
-
+    pollFn([ currentSliceStart ]);
     currentSliceStart += samplingSliceWidth;
-    console.log('PIXEL BUFFER @', l);
-    console.log(currentSampleLocation());
-    console.log(pixelBuffer);
-    console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'); 
-    timeoutId = window.setTimeout(schedule, 500);
+    // console.log('PIXEL BUFFER @', l);
+    // console.log(currentSampleLocation());
+    // console.log(pixelBuffer);
+    // console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'); 
+    
+    // The 'time' being passed into the timeout, is
+    // 1 / (sampling frequency in Hz) which is then multiplied by 1000
+    // in order to convert milliseconds to seconds
+    // timeoutId = window.setTimeout(schedule, ( 1 / samplingFreq ) * 1000 );
   }
 
   return {
     start: () => {
+      console.log('Sampling at this may ms:', ( 1 / samplingFreq ) * 1000 );
       schedule();
     },
     cancel: () => {

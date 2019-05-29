@@ -157,7 +157,7 @@ export default class AudioNode extends Component<IProps> {
     const { id, subscription } = this.props;
 
     subscription(id, (payload) => {
-      console.log(`Recv >>> ${id}:`, payload);
+      // console.log(`Recv >>> ${id}:`, payload);
       this.decideAction(payload);
     })
     this.props.mountFn({ childId: this.props.id, ready: true });

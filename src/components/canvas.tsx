@@ -4,7 +4,7 @@ import soundScheduler from '../util/scheduler';
 let store = {
   canvas: {
     height: 500,
-    width: 700,
+    width: 800,
     data: {
       // Stuff pertaining lines will be put here?
     }
@@ -29,8 +29,7 @@ interface Props{
 }
 
 export default class Canvas extends Component<Props> {
-  // public height: string = store.canvas.height;
-  // public width: string = store.canvas.width;
+
   public state = {
     mouseDown: false,
     colorsWaveTypeMap: {
@@ -104,8 +103,15 @@ export default class Canvas extends Component<Props> {
     //   return false
     // }))
     // console.log(pixelBuff);
-    this.props.publish('ch-1', { action: 'UPDATE_FREQ', data: this.initFreq})
-    this.initFreq -= 100;
+
+    // this.props.publish('ch-1', { action: 'UPDATE_FREQ', data: this.initFreq})
+    // this.initFreq -= 100;
+    console.log("Starting Audio Scheduler Worker");
+    this.audioSchedulerWorker.postMessage({
+      payload: 'START_WORKER',
+      data: null
+    })
+
   }
 
   private createAudioNode = () => {
@@ -121,6 +127,13 @@ export default class Canvas extends Component<Props> {
     this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
   }
 
+  private pushComputedFrequenciesToNodes = () => {
+
+  }
+
+  // I know this is messy, but I am testing
+  audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
+
   // Lifecylce
   componentDidMount() {
     let test = true;
@@ -135,14 +148,39 @@ export default class Canvas extends Component<Props> {
         this.ctx.fillRect(0, 0, 20, 4);
       }
     }
-    this.scheduling = soundScheduler({
-      canvasCtx: canvasObj.getContext('2d'),
-      canvasWidth: store.canvas.width,
-      canvasHeight: store.canvas.height,
-      samplingSliceWidth: 8,
-    });
+    
+    const pub = this.props.publish;
+    // Initializes the scheduler
+    // this.scheduling = soundScheduler({
+    //   canvasCtx: canvasObj.getContext('2d'),
+    //   canvasWidth: store.canvas.width,
+    //   canvasHeight: store.canvas.height,
+    //   samplingSliceWidth: 8,
+    //   samplingFreq: 44100, // This will be the frequency of sampling
+    //   pollFn: (freqData) => {
+    //     pub('ch-1', { data: freqData });
+    //     console.log('Current slice:', freqData)
+    //   }
+    // });
 
-    this.scheduling.start();
+    this.audioSchedulerWorker.postMessage({
+      action: 'INIT_WORKER',
+      payload: {
+        canvasCtx: canvasObj.getContext('2d'),
+        canvasWidth: store.canvas.width,
+        canvasHeight: store.canvas.height,
+        samplingSliceWidth: 8,
+        samplingFreq: 44100, // This will be the frequency of sampling
+        // pollFn: (freqData: any) => {
+        //   pub('ch-1', { data: freqData });
+        //   console.log('Current slice:', freqData)
+        // }
+      }
+    })
+
+    // Kicks off sampling what is drawn on the
+    // canvas 
+    // this.scheduling.start();
   }
 
   // Otherwise canvas will never render
@@ -158,7 +196,7 @@ export default class Canvas extends Component<Props> {
     
     return (
       <div>
-        <canvas 
+        <canvas
           id={id}
           style={{
             background: 'lightgrey',
