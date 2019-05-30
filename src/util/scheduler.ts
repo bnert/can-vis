@@ -84,7 +84,9 @@ const soundScheduler = (
   let timeoutId = -1;
   const schedule = () => {
     const [l, t, w, h] = currentSampleLocation();
+    console.log('Polling Canvas Component...');
     const canvData = canvasCtx.getImageData(l, t, w, h).data;
+    
     let pixelBuffer: Array<any> = [];
 
     let rowCounter = 0;
@@ -115,7 +117,7 @@ const soundScheduler = (
         px: compPx(canvData, i)
       })
     }
-    pollFn([ currentSliceStart ]);
+    // pollFn([ currentSliceStart ]);
     currentSliceStart += samplingSliceWidth;
     // console.log('PIXEL BUFFER @', l);
     // console.log(currentSampleLocation());
@@ -125,7 +127,7 @@ const soundScheduler = (
     // The 'time' being passed into the timeout, is
     // 1 / (sampling frequency in Hz) which is then multiplied by 1000
     // in order to convert milliseconds to seconds
-    // timeoutId = window.setTimeout(schedule, ( 1 / samplingFreq ) * 1000 );
+    timeoutId = window.setTimeout(schedule, ( 1 / samplingFreq ) * 1000 );
   }
 
   return {

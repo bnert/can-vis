@@ -9,6 +9,7 @@ interface IProps {
   id: string;
   startingHz?: number;
   data: IData;
+  audioContext: AudioContext;
   mountFn(obj: any): void;
   subscription(channel: string, pubFn: (payload: any) => void): void;
 }
@@ -38,7 +39,8 @@ const keys = {
 
 export default class AudioNode extends Component<IProps> {
 
-  private audioCtx: AudioContext = new (window.AudioContext || window.webkitAudioContext)()
+  // private audioCtx: AudioContext = new (window.AudioContext || window.webkitAudioContext)()
+  audioCtx: AudioContext = this.props.audioContext
   
   // Need to segregate numerical/volatile
   // state from other state variables

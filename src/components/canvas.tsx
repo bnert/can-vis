@@ -11,12 +11,6 @@ let store = {
   },
 }
 
-const colorsWaveTypeMap = {
-  red: [244, 36, 36, 1]
-}
-
-
-
 interface CanvasMeta {
   height: number;
   width: number;
@@ -25,12 +19,13 @@ interface CanvasMeta {
 interface Props{
   id: string;
   canvas: CanvasMeta;
+  audioContext: AudioContext;
   publish(channel: string, payload: any): void;
 }
 
 export default class Canvas extends Component<Props> {
 
-  public state = {
+  state = {
     mouseDown: false,
     colorsWaveTypeMap: {
       current: 'sine',
@@ -42,11 +37,13 @@ export default class Canvas extends Component<Props> {
       }
     }
   }
+
+  private initFreq = 1000;
   private ctx: any;
-  private scheduling: any;
+  // I know this is messy, but I am testing
+  audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
 
   // Public
-
   public handleMouseDown = (e: MouseEvent) => {
     this.setState({ ...this.state, mouseDown: true });
     this.ctx.beginPath();
@@ -77,10 +74,8 @@ export default class Canvas extends Component<Props> {
     this.ctx.stroke();
   }
 
-
   private handleSelectChange = (e: Event) => {
     const target: any = e.target;
-    
     target && target.value ?
       this.setState({ ...this.state, colorsWaveTypeMap: { 
         current: target.value,
@@ -88,8 +83,6 @@ export default class Canvas extends Component<Props> {
       }}):
       null;
   }
-
-  initFreq = 1000;
 
   private printCanvas = () => {
     // const { height, width } = this.props.canvas;
@@ -108,7 +101,7 @@ export default class Canvas extends Component<Props> {
     // this.initFreq -= 100;
     console.log("Starting Audio Scheduler Worker");
     this.audioSchedulerWorker.postMessage({
-      payload: 'START_WORKER',
+      action: 'START_WORKER',
       data: null
     })
 
@@ -131,8 +124,6 @@ export default class Canvas extends Component<Props> {
 
   }
 
-  // I know this is messy, but I am testing
-  audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
 
   // Lifecylce
   componentDidMount() {
@@ -143,6 +134,9 @@ export default class Canvas extends Component<Props> {
       canvasObj.height = store.canvas.height;
       this.ctx = canvasObj.getContext('2d');
       this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
+
+      // So that way we have some sore of baseline for
+      // what to expect from the UI
       if(test){
         this.ctx.fillStyle = 'aquamarine'
         this.ctx.fillRect(0, 0, 20, 4);
@@ -150,37 +144,55 @@ export default class Canvas extends Component<Props> {
     }
     
     const pub = this.props.publish;
-    // Initializes the scheduler
-    // this.scheduling = soundScheduler({
-    //   canvasCtx: canvasObj.getContext('2d'),
-    //   canvasWidth: store.canvas.width,
-    //   canvasHeight: store.canvas.height,
-    //   samplingSliceWidth: 8,
-    //   samplingFreq: 44100, // This will be the frequency of sampling
-    //   pollFn: (freqData) => {
-    //     pub('ch-1', { data: freqData });
-    //     console.log('Current slice:', freqData)
-    //   }
-    // });
 
+    this.audioSchedulerWorker.onmessage = (message: any) => {
+      console.log('Got message from audio worker:', message);
+      if(message.data.action === 'GET_CANVAS') {
+        let canvasData = this.ctx.getImageData(0, 0, 256, 500).data;
+        let canvasDataBuffer = new ArrayBuffer(canvasData.buffer);
+        let audioCtxTime = this.props.audioContext.currentTime;
+        console.log(canvasData);
+        // console.log(canvasData.buffer);
+        let cv = new Uint8Array(canvasData);
+        // console.log(cv);
+        // let bf = cv.buffer;
+        // console.log('bf', bf);
+        
+        let payloadObject = { 
+          action: 'RESP_CANVAS',
+          payload: {
+            buf: canvasData.buffer,
+            currentTime: audioCtxTime
+          }
+        }
+        console.log(canvasData.buffer);
+        console.log('Sending data to worker');
+        // console.log({ ...payloadObject, c: canvasData.buffer });
+        console.log(payloadObject);
+        console.log(canvasData.buffer);
+        // Use transferrable feature, which is essentially pass by reference
+        // helps with keeping this transaction/handoff efficient
+        this.audioSchedulerWorker.postMessage(payloadObject, [payloadObject.payload.buf]);
+      }
+    }
+
+    /**
+     * What we want to do, is buffer X audio sample slices,
+     * that way we do not choke the canvas rendering context
+     */
     this.audioSchedulerWorker.postMessage({
       action: 'INIT_WORKER',
       payload: {
-        canvasCtx: canvasObj.getContext('2d'),
+        // canvasCtx: canvasObj.getContext('2d'),
         canvasWidth: store.canvas.width,
         canvasHeight: store.canvas.height,
+        samplingBufferSize: 32, // Lookahead buffer of 32ms
         samplingSliceWidth: 8,
-        samplingFreq: 44100, // This will be the frequency of sampling
-        // pollFn: (freqData: any) => {
-        //   pub('ch-1', { data: freqData });
-        //   console.log('Current slice:', freqData)
-        // }
+        samplingFreq: 4410, // This will be the frequency of sampling
+        // samplingFreq: 44100, // This will be the frequency of sampling
       }
     })
 
-    // Kicks off sampling what is drawn on the
-    // canvas 
-    // this.scheduling.start();
   }
 
   // Otherwise canvas will never render
@@ -213,7 +225,7 @@ export default class Canvas extends Component<Props> {
         <div>
           <button onClick={this.printCanvas}>Show canvas data</button>
           <button onClick={() => {
-            this.scheduling.cancel();
+            console.log('Cancel');
           }}>Cancel</button>
         </div>
       </div>

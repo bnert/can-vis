@@ -48,6 +48,12 @@ export default class App extends Component {
       })
     }
 
+    /** 
+     * One thing that needs to be made available to both
+     * the canvas and the audio worker, is the audio context
+     */
+    audioCtx: AudioContext = new (window.AudioContext || window.webkitAudioContext)();
+
     /** Instantiate a new pubsub for updates */
     ps = pubsub();
 
@@ -106,6 +112,7 @@ export default class App extends Component {
           <div>
             <Canvas 
               id={'can-vis'} 
+              audioContext={this.audioCtx}
               canvas={{
                 height: 500,
                 width: 700,
@@ -121,7 +128,8 @@ export default class App extends Component {
             >
               {audioNodes.map((el: any) => {
                 return <AudioNode 
-                  {...el} 
+                  {...el}
+                  audioContext={this.audioCtx}
                   mountFn={this.pollChildMounted} 
                   subscription={this.ps.sub}
                 />
