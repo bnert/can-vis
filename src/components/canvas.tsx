@@ -146,18 +146,10 @@ export default class Canvas extends Component<Props> {
     const pub = this.props.publish;
 
     this.audioSchedulerWorker.onmessage = (message: any) => {
-      console.log('Got message from audio worker:', message);
+      // console.log('Got message from audio worker:', message);
       if(message.data.action === 'GET_CANVAS') {
         let canvasData = this.ctx.getImageData(0, 0, 256, 500).data;
-        let canvasDataBuffer = new ArrayBuffer(canvasData.buffer);
         let audioCtxTime = this.props.audioContext.currentTime;
-        console.log(canvasData);
-        // console.log(canvasData.buffer);
-        let cv = new Uint8Array(canvasData);
-        // console.log(cv);
-        // let bf = cv.buffer;
-        // console.log('bf', bf);
-        
         let payloadObject = { 
           action: 'RESP_CANVAS',
           payload: {
@@ -165,11 +157,6 @@ export default class Canvas extends Component<Props> {
             currentTime: audioCtxTime
           }
         }
-        console.log(canvasData.buffer);
-        console.log('Sending data to worker');
-        // console.log({ ...payloadObject, c: canvasData.buffer });
-        console.log(payloadObject);
-        console.log(canvasData.buffer);
         // Use transferrable feature, which is essentially pass by reference
         // helps with keeping this transaction/handoff efficient
         this.audioSchedulerWorker.postMessage(payloadObject, [payloadObject.payload.buf]);
@@ -186,7 +173,7 @@ export default class Canvas extends Component<Props> {
         // canvasCtx: canvasObj.getContext('2d'),
         canvasWidth: store.canvas.width,
         canvasHeight: store.canvas.height,
-        samplingBufferSize: 32, // Lookahead buffer of 32ms
+        samplingBufferLookahead: 32, // Lookahead buffer of 32ms
         samplingSliceWidth: 8,
         samplingFreq: 4410, // This will be the frequency of sampling
         // samplingFreq: 44100, // This will be the frequency of sampling

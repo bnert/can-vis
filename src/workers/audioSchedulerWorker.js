@@ -139,6 +139,7 @@ let audioScheduer = null;
 
 // Audio buffer
 let audioBuffer = [];
+let currentAudioClockTime = 0;
 
 // Some canvas data
 let canvasWidth = 0;
@@ -146,7 +147,7 @@ let canvasHeight = 0;
 
 // Some sampling computational data
 let currentSliceStart = 0;
-let samplingBufferSize = 0;
+let samplingBufferLookahead = 0;
 let samplingSliceWidth = 0;
 let samplingFreq = 0;
 
@@ -160,7 +161,8 @@ const getCanvasData = () => {
   self.postMessage({ 
     action: 'GET_CANVAS',
     payload: null
-  })
+  });
+  self.setTimeout(getCanvasData, samplingFreq + samplingBufferLookahead);
 }
 
 const pushSampledDataToBuffer = (payload) => {
@@ -169,15 +171,19 @@ const pushSampledDataToBuffer = (payload) => {
     time: payload.currentTime,
     pxData: new Uint8Array(payload.buf)
   };
-  audioBuffer.push(data)
+  audioBuffer.push(data);
   // console.log("Pushed:", data)
 }
 
-const computeFrequencyData = (canvasData) => {
-  console.log('Compute...');
-  console.log(audioBuffer);
-  console.log('Sampling Freq', samplingFreq)
-  // self.setTimeout(computeFrequencyData, samplingFreq);
+const computeFrequencyData = () => {
+  console.log("Computing");
+  if(Math.floor(currentAudioClockTime) % 100000 === 0 ) {
+    console.log('Current Buffer', audioBuffer);
+  }
+  // Do compute stuff then remove head of queue
+  audioBuffer.splice(0, 1); // Better perf than unshift
+  currentAudioClockTime += samplingFreq;
+  self.setTimeout(computeFrequencyData, samplingFreq + (samplingBufferLookahead * 2));
 }
 
 
@@ -195,6 +201,7 @@ self.onmessage = function({ data }) {
   switch(action) {
     case 'GET_CANVAS':
         getCanvasData();
+        self.setTimeout(getCanvasData, samplingFreq + samplingBufferLookahead)
       break;
     case 'RESP_CANVAS':
         // Payload will be a Uint8Array buffer
@@ -206,7 +213,7 @@ self.onmessage = function({ data }) {
       console.log("Initialized");
       canvasHeight = payload.canvasHeight;
       canvasWidth = payload.canvasWidth;
-      samplingBufferSize = payload.samplingBufferSize;
+      samplingBufferLookahead = payload.samplingBufferLookahead;
       samplingSliceWidth = payload.samplingSliceWidth;
       samplingFreq = ( 1 / payload.samplingFreq ) * 1000;
       initialized = true;
