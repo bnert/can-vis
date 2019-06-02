@@ -125,10 +125,12 @@ const soundScheduler = (schedulerSettings) => {
     computeFrequencyData
     sendFrequencyData
 
-
-
-
 */
+
+
+
+
+
 // It isn't usually the best to have global variables,
 // however, in this context, we do need to asign out some
 // globals in order to check 

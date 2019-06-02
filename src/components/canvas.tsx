@@ -31,7 +31,7 @@ export default class Canvas extends Component<Props> {
       current: 'sine',
       available: {
         sine: 'aquamarine',
-        traingle: 'green',
+        triangle: 'green',
         square: 'purple',
         sawtooth: 'red',
       }
@@ -43,23 +43,37 @@ export default class Canvas extends Component<Props> {
   // I know this is messy, but I am testing
   audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
 
+  firstX = 0;
+  firstY = 0;
+  lastX = 0;
+  lastY = 0;
   // Public
   public handleMouseDown = (e: MouseEvent) => {
     this.setState({ ...this.state, mouseDown: true });
     this.ctx.beginPath();
-    this.ctx.moveTo(e.clientX, e.clientY);
-    this.paint(e.clientX, e.clientY);
-    this.createAudioNode();
+    this.ctx.moveTo(e.offsetX, e.offsetY);
+    this.paint(e.offsetX, e.offsetY);
+    this.firstX = e.offsetX;
+    this.firstY = e.offsetY;
   }
-
+  
   public handleMouseUp = () => {
     this.setState({ ...this.state, mouseDown: false });
     this.ctx.closePath();
+    // Path goes left to right
+    if (this.firstX < this.lastX) {
+      this.initFreq = 200;
+    } else {
+      this.initFreq = 700;
+    }
+    this.addAudioNodeToMixer(this.initFreq);
   }
 
   public handleMouseMove = (e: MouseEvent) => {
     if(this.state.mouseDown){
-      this.paint(e.clientX, e.clientY);
+      this.paint(e.offsetX, e.offsetY);
+      this.lastX = e.offsetX;
+      this.lastY = e.offsetY;
     }
   }
 
@@ -107,17 +121,45 @@ export default class Canvas extends Component<Props> {
 
   }
 
-  private createAudioNode = () => {
+  private addAudioNodeToMixer = (initFreq: number) => {
     const { current } = this.state.colorsWaveTypeMap;
     // Shim until state can by dynamic
     const waves: any = {
-      sine: 'ch-0',
-      traingle: 'ch-1',
-      square: 'ch-2',
-      sawtooth: 'ch-3'
+      sine: 'sine',
+      triangle: 'triangle',
+      square: 'square',
+      sawtooth: 'sawtooth'
     };
 
-    this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
+    this.props.publish('mixerEvent', { 
+      action: 'ADD_OSC', 
+      data: {
+        channel: waves[current],
+        initFreq
+      } 
+    })
+    // this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
+  }
+
+  freqVal = 440;
+  private updateAudioFreq = (freqs: number) => {
+    const { current } = this.state.colorsWaveTypeMap;
+    // Shim until state can by dynamic
+    const waves: any = {
+      sine: 'sine',
+      triangle: 'triangle',
+      square: 'square',
+      sawtooth: 'sawtooth'
+    };
+
+    this.props.publish('mixerEvent', { 
+      action: 'UPDATE_OSCFRQ', 
+      data: {
+        channel: waves[current],
+        newFreqs: [freqs, freqs * 4, freqs * 5, freqs * 6]
+      } 
+    })
+    // this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
   }
 
   private pushComputedFrequenciesToNodes = () => {
@@ -214,6 +256,18 @@ export default class Canvas extends Component<Props> {
           <button onClick={() => {
             console.log('Cancel');
           }}>Cancel</button>
+          <input 
+            type="range" 
+             min="0" 
+             max="1" 
+             step="0.01"
+             value={this.freqVal}
+             onChange={(e) => {
+               const val: number = parseFloat(e.target.value);
+               this.freqVal = val;
+               this.updateAudioFreq(this.freqVal * 1000);
+             }}
+            />
         </div>
       </div>
     )

@@ -28,15 +28,6 @@ interface IOsc {
   fxChain: any;
 }
 
-const keys = {
-  c: 261.63,
-  cSharp: 277.18,
-  d: 293.66,
-  dSharp: 311.13,
-  e: 329.63,
-  f: 349.23
-}
-
 export default class AudioNode extends Component<IProps> {
 
   // private audioCtx: AudioContext = new (window.AudioContext || window.webkitAudioContext)()

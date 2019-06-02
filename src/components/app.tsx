@@ -3,6 +3,7 @@ import { Route, Router, RouterOnChangeArgs } from "preact-router";
 import pubsub from '../util/pubsub';
 
 import Canvas from './canvas';
+import Mixer from './mixer';
 import AudioNode from './audio-node';
 
 if ((module as any).hot) {
@@ -110,6 +111,10 @@ export default class App extends Component {
     public render(_ : any, { audioNodes }: any) {
         return (
           <div>
+            <Mixer 
+              audioContext={this.audioCtx}
+              subFn={this.ps.sub}
+            />
             <Canvas 
               id={'can-vis'} 
               audioContext={this.audioCtx}
@@ -119,7 +124,7 @@ export default class App extends Component {
               }}
               publish={this.ps.pub}
             />
-            <div
+            {/* <div
               id="mixer"
               style={{
                 display: 'flex',
@@ -134,7 +139,8 @@ export default class App extends Component {
                   subscription={this.ps.sub}
                 />
               })}
-            </div>
+            </div> */}
+            
           </div>
         );
     }
