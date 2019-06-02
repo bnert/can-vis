@@ -86,17 +86,19 @@ export default class AudioMixer extends Component<any, any> {
     })
   }
 
-  updateNodeFreq = (channelName: string, newFreqs: number[]) => {
+  updateNodeFreq = (channelName: string, newFreqPayload: any) => {
     let channel = this.channels[channelName];
     // Want to iterate over the one with the least
     // length to avoid bounds error
-    let iterable = newFreqs.length > channel._nodes.length ?
-      channel._nodes :
-      newFreqs;
-
-    iterable.forEach((_: any, i: number) => {
-      channel._nodes[i].updateFreq(newFreqs[i], this.audioCtx.currentTime);
-    });
+    // let iterable = newFreqs.length > channel._nodes.length ?
+    //   channel._nodes :
+    //   newFreqs;
+    const { newFreq, scheduleAtTime } = newFreqPayload;
+    console.log('New Freq Payload', newFreqPayload);
+    channel._nodes[0].updateFreq(newFreq, scheduleAtTime)
+    // iterable.forEach((_: any, i: number) => {
+    //   channel._nodes[i].updateFreq(newFreqs[i], this.audioCtx.currentTime);
+    // });
   }
 
   // This fuction is mainly implemented to provide an
@@ -113,8 +115,8 @@ export default class AudioMixer extends Component<any, any> {
           this.addNodeToChannel(data.channel || 'sine', data.initFreq || 440);
           break;
         case 'UPDATE_OSCFRQ':
-          console.log('update', data);
-          this.updateNodeFreq(data.channel, data.newFreqs);
+          // console.log('update', data);
+          this.updateNodeFreq(data.channel, data.oscData);
           break;
         default:
           console.log(`Mixer: ${action} action not specified`);
@@ -128,13 +130,13 @@ export default class AudioMixer extends Component<any, any> {
     const { subFn, audioContext }: any = this.props;
     this.audioCtx = audioContext;
 
-    // this.decideAction({
-    //   action: 'ADD_OSC',
-    //   data: {
-    //     channel: 'sawtooth',
-    //     initFreq: 1000
-    //   }
-    // })
+    this.decideAction({
+      action: 'ADD_OSC',
+      data: {
+        channel: 'sine',
+        initFreq: 200
+      }
+    })
 
     /**
      * Setup Subscription receiver

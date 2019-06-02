@@ -131,18 +131,18 @@ export default class Canvas extends Component<Props> {
       sawtooth: 'sawtooth'
     };
 
-    this.props.publish('mixerEvent', { 
-      action: 'ADD_OSC', 
-      data: {
-        channel: waves[current],
-        initFreq
-      } 
-    })
+    // this.props.publish('mixerEvent', { 
+    //   action: 'ADD_OSC', 
+    //   data: {
+    //     channel: waves[current],
+    //     initFreq
+    //   } 
+    // })
     // this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
   }
 
   freqVal = 440;
-  private updateAudioFreq = (freqs: number) => {
+  private updateAudioFreq = (payload: any) => {
     const { current } = this.state.colorsWaveTypeMap;
     // Shim until state can by dynamic
     const waves: any = {
@@ -155,8 +155,12 @@ export default class Canvas extends Component<Props> {
     this.props.publish('mixerEvent', { 
       action: 'UPDATE_OSCFRQ', 
       data: {
-        channel: waves[current],
-        newFreqs: [freqs, freqs * 4, freqs * 5, freqs * 6]
+        channel: 'sine',
+        // channel: waves[current],
+        oscData: {
+          scheduleAtTime: payload.scheduleAtTime,
+          newFreq: payload.freqToPlay
+        }
       } 
     })
     // this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
@@ -175,13 +179,13 @@ export default class Canvas extends Component<Props> {
       canvasObj.width = store.canvas.width;
       canvasObj.height = store.canvas.height;
       this.ctx = canvasObj.getContext('2d');
-      this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
+      // this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
 
       // So that way we have some sore of baseline for
       // what to expect from the UI
       if(test){
         this.ctx.fillStyle = 'aquamarine'
-        this.ctx.fillRect(0, 0, 20, 4);
+        this.ctx.fillRect(0, 490, 20, 4);
       }
     }
     
@@ -191,7 +195,8 @@ export default class Canvas extends Component<Props> {
       // console.log('Got message from audio worker:', message);
       let { action, payload } = message.data;
       if(action === 'GET_CANVAS') {
-        let canvasData = this.ctx.getImageData(0, parseInt(payload.sliceStart), 256, 500).data;
+        // console.log("Sampling Frame: ", parseInt(payload.sliceStart), 0, 4, 500);
+        let canvasData = this.ctx.getImageData(parseInt(payload.sliceStart), 0, 4, 500).data;
         let audioCtxTime = this.props.audioContext.currentTime;
         let payloadObject = { 
           action: 'RESP_CANVAS',
@@ -200,10 +205,14 @@ export default class Canvas extends Component<Props> {
             currentTime: audioCtxTime
           }
         }
+
         // Use transferrable feature, which is essentially pass by reference
         // helps with keeping this transaction/handoff efficient
         this.audioSchedulerWorker
           .postMessage(payloadObject, [payloadObject.payload.buf]);
+      } else if( action === 'UPDATE_OSCFREQ') {
+        console.log('Updated freq to', payload.freqToPlay);
+        this.updateAudioFreq(payload);
       }
     }
 
@@ -216,10 +225,10 @@ export default class Canvas extends Component<Props> {
       payload: {
         canvasWidth: store.canvas.width,
         canvasHeight: store.canvas.height,
-        samplingBufferLookahead: 32, // Lookahead buffer of 32ms
-        samplingSliceWidth: 8, // 2 Pixels
-        samplingFreq: 4410, // This will be the frequency of sampling
-        // samplingFreq: 44100, // This will be the frequency of sampling
+        samplingBufferLookahead: 32, // Lookahead buffer of pixels
+        samplingSliceWidth: 4, // 2 Pixels
+        // samplingFreq: 4410, // This will be the frequency of sampling
+        samplingFreq: 441, // This will be the frequency of sampling
       }
     })
 
