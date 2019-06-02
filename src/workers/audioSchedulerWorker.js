@@ -9,109 +9,111 @@
  * 
  * @return ISchedulerReturn => function that takes in 
  */
-const soundScheduler = (schedulerSettings) => {
-  const {
-    canvasCtx,
-    canvasWidth,
-    canvasHeight,
-    samplingSliceWidth,
-    samplingFreq,
-    // pollFn
-  } = schedulerSettings;
+// const soundScheduler = (schedulerSettings) => {
+//   const {
+//     canvasCtx,
+//     canvasWidth,
+//     canvasHeight,
+//     samplingSliceWidth,
+//     samplingFreq,
+//     // pollFn
+//   } = schedulerSettings;
 
-  // This will be the number of times we find pixels
-  // in the canvas in order to play sounds
-  let currentSliceStart = 0;
-  const numOfSlices = canvasWidth / samplingSliceWidth;
+//   // This will be the number of times we find pixels
+//   // in the canvas in order to play sounds
+//   let currentSliceStart = 0;
+//   const numOfSlices = canvasWidth / samplingSliceWidth;
 
-  const currentSampleLocation = () => {
-    // Let Top Width Height
-    return [currentSliceStart % canvasWidth, 0, samplingSliceWidth, canvasHeight];
-  }
+//   const currentSampleLocation = () => {
+//     // Let Top Width Height
+//     return [currentSliceStart % canvasWidth, 0, samplingSliceWidth, canvasHeight];
+//   }
 
-  console.log('slices possible:', numOfSlices);
+//   console.log('slices possible:', numOfSlices);
 
-  /**
-   * Shorthand for getting pixel values
-   * @param {*} pxArray 
-   * @param {*} i 
-   */
-  const compPx = (pxArray, i) => ({ 
-    r: pxArray[i],
-    g: pxArray[i + 1],
-    b: pxArray[i + 2],
-    a: pxArray[i + 3]
-  })
+//   /**
+//    * Shorthand for getting pixel values
+//    * @param {*} pxArray 
+//    * @param {*} i 
+//    */
+//   const compPx = (pxArray, i) => ({ 
+//     r: pxArray[i],
+//     g: pxArray[i + 1],
+//     b: pxArray[i + 2],
+//     a: pxArray[i + 3]
+//   })
 
 
-  let timeoutId = -1;
-  /**
-   * Function for taking in 
-   */
-  const schedule = () => {
-    const [l, t, w, h] = currentSampleLocation();
-    // const canvData = canvasCtx.getImageData(l, t, w, h).data;
+//   let timeoutId = -1;
+//   /**
+//    * Function for taking in 
+//    */
+//   const schedule = () => {
+//     const [l, t, w, h] = currentSampleLocation();
+//     // const canvData = canvasCtx.getImageData(l, t, w, h).data;
 
-    let canvData = self.postMessage({ 
-      action: 'GET_CANVAS'
-    });
+//     let canvData = self.postMessage({ 
+//       action: 'GET_CANVAS'
+//     });
 
-    // let pixelBuffer = [];
-    // let rowCounter = 0;
-    // let rowBounds = w * 4; // ex. 0..39 = 0th row
-    // let colCounter = 0;
-
-    // // Pixel data reads:
-    // // left -> right, then top -> bottom
-    // // so if a canvas ctx was height: 100, width: 200,
-    // // then each row would be split up into 200 indices in
-    // // the array before getting to the next row.
-    // for(let i = 0; i < canvData.length; i += 4) {
-    //   if( i >= rowBounds ){
-    //     rowBounds += (w * 4);
-    //     rowCounter += 1;
-    //   }
-    //   // Need to have this at the end, in order not to have a wrapping column number
-
-    //   colCounter = (i / 4) % (w);
-    //   // Skip bcs blank line
-    //   if(canvData[i] === 0) {
-    //     continue;
-    //   }
-
-    //   pixelBuffer.push({
-    //     x: colCounter,
-    //     y: rowCounter,
-    //     px: compPx(canvData, i)
-    //   })
-    // }
-    // // pollFn([ currentSliceStart ]);
-    // console.log('Current Slice', currentSliceStart);
-    // currentSliceStart += samplingSliceWidth;
     
-    timeoutId = self.setTimeout(schedule, ( 1 / samplingFreq ) * 1000 );
-  }
 
-  return {
-    start: () => {
-      console.log('Sampling at this may ms:', ( 1 / samplingFreq ) * 1000 );
-      /**
-       * What we want to do is:
-       *  1. Get canvas data
-       *  2. For duration of time, compute pixels in the buffer
-       *  3. Send out computed values
-       *  4. Re-schedule
-       */
-      schedule();
-    },
-    stop: () => {
-      console.log('Cancelling timeout', timeoutId);
-      timeoutId !== -1 ?
-        self.clearTimeout(timeoutId):
-        console.log("Timeout id negative");
-    }
-  }
-}
+//     // // Pixel data reads:
+//     // // left -> right, then top -> bottom
+//     // // so if a canvas ctx was height: 100, width: 200,
+//     // // then each row would be split up into 200 indices in
+//     // // the array before getting to the next row.
+//     let pixelBuffer = [];
+//     let rowCounter = 0;
+//     let rowBounds = w * 4; // ex. 0..39 = 0th row
+//     let colCounter = 0;
+
+//     for(let i = 0; i < canvData.length; i += 4) {
+//       if( i >= rowBounds ){
+//         rowBounds += (w * 4);
+//         rowCounter += 1;
+//       }
+//       // Need to have this at the end, in order not to have a wrapping column number
+
+//       colCounter = (i / 4) % (w);
+//       // Skip bcs blank line
+//       if(canvData[i] === 0) {
+//         continue;
+//       }
+
+//       pixelBuffer.push({
+//         x: colCounter,
+//         y: rowCounter,
+//         px: compPx(canvData, i)
+//       })
+//     }
+//     // // pollFn([ currentSliceStart ]);
+//     // console.log('Current Slice', currentSliceStart);
+//     // currentSliceStart += samplingSliceWidth;
+    
+//     timeoutId = self.setTimeout(schedule, ( 1 / samplingFreq ) * 1000 );
+//   }
+
+//   return {
+//     start: () => {
+//       console.log('Sampling at this may ms:', ( 1 / samplingFreq ) * 1000 );
+//       /**
+//        * What we want to do is:
+//        *  1. Get canvas data
+//        *  2. For duration of time, compute pixels in the buffer
+//        *  3. Send out computed values
+//        *  4. Re-schedule
+//        */
+//       schedule();
+//     },
+//     stop: () => {
+//       console.log('Cancelling timeout', timeoutId);
+//       timeoutId !== -1 ?
+//         self.clearTimeout(timeoutId):
+//         console.log("Timeout id negative");
+//     }
+//   }
+// }
 
 // Psuedo code for operations
 /*
@@ -139,8 +141,10 @@ const soundScheduler = (schedulerSettings) => {
 let initialized = false;
 let audioScheduer = null;
 
+// Pixels
+let pixelBuffer = [];
 // Audio buffer
-let audioBuffer = [];
+let frequencyDataBuffer = [];
 let currentAudioClockTime = 0;
 
 // Some canvas data
@@ -162,30 +166,88 @@ let samplingFreq = 0;
 const getCanvasData = () => {
   self.postMessage({ 
     action: 'GET_CANVAS',
-    payload: null
+    payload: {
+      sliceStart: currentSliceStart
+    }
   });
-  self.setTimeout(getCanvasData, samplingFreq + samplingBufferLookahead);
+  currentSliceStart += 8;
+  if (currentSliceStart >= canvasWidth) {
+    currentSliceStart = 0;
+  }
+  self.setTimeout(getCanvasData, samplingFreq + 500);
 }
 
 const pushSampledDataToBuffer = (payload) => {
-  // console.log("PAYLOAD", payload);
   const data = {
     time: payload.currentTime,
     pxData: new Uint8Array(payload.buf)
   };
-  audioBuffer.push(data);
-  // console.log("Pushed:", data)
+  pixelBuffer.push(data);
+}
+
+const compPx = (pxArray, i) => ({ 
+  r: pxArray[i],
+  g: pxArray[i + 1],
+  b: pxArray[i + 2],
+  a: pxArray[i + 3]
+})
+
+const computePaintedPx = (currentSliceData) => {
+  if(!currentSliceData) return;
+  // Pixel data reads:
+  // left -> right, then top -> bottom
+  // so if a canvas ctx was height: 100, width: 200,
+  // then each row would be split up into 200 indices in
+  // the array before getting to the next row.
+  let rowCounter = 0;
+  let w = samplingBufferLookahead;
+  let rowBounds = samplingBufferLookahead * 4; // ex. 0..31 = 0th row
+  let colCounter = 0;
+
+  // Canvas data
+  let canvData = currentSliceData.pxData;
+  
+  for(let i = 0; i < canvData.length; i += 4) {
+    if( i >= rowBounds ){
+      rowBounds += (w * 4);
+      rowCounter += 1;
+    }
+    // Need to have this at the end, in order not to have a wrapping column number
+
+    colCounter = (i / 4) % (w);
+    // Skip bcs blank line
+    if(canvData[i] === 0) {
+      continue;
+    }
+
+    // Start simple and only compute the leftmost pixel
+    if(colCounter === 0) {
+      console.log('Pass', currentSliceStart);
+      frequencyDataBuffer.push({
+        x: colCounter,
+        y: rowCounter,
+        px: compPx(canvData, i)
+      });
+    }
+  }
 }
 
 const computeFrequencyData = () => {
-  console.log("Computing");
-  if(Math.floor(currentAudioClockTime) % 100000 === 0 ) {
-    console.log('Current Buffer', audioBuffer);
+
+  console.log(`Computing ${currentAudioClockTime} ~> Buffer Empty?: ${pixelBuffer.length}`);
+  console.log(pixelBuffer);
+  console.log(frequencyDataBuffer);
+
+  if(Math.floor(currentAudioClockTime) % 10 === 0 ) {
+    // console.log('Current Buffer', pixelBuffer);
   }
   // Do compute stuff then remove head of queue
-  audioBuffer.splice(0, 1); // Better perf than unshift
+  computePaintedPx(pixelBuffer[0]);
+
+  pixelBuffer.splice(0, 1); // Better perf than unshift
+
   currentAudioClockTime += samplingFreq;
-  self.setTimeout(computeFrequencyData, samplingFreq + (samplingBufferLookahead * 2));
+  self.setTimeout(computeFrequencyData, samplingFreq + 500);
 }
 
 
@@ -203,7 +265,7 @@ self.onmessage = function({ data }) {
   switch(action) {
     case 'GET_CANVAS':
         getCanvasData();
-        self.setTimeout(getCanvasData, samplingFreq + samplingBufferLookahead)
+        // self.setTimeout(getCanvasData, samplingFreq + samplingBufferLookahead)
       break;
     case 'RESP_CANVAS':
         // Payload will be a Uint8Array buffer
@@ -240,6 +302,4 @@ self.onmessage = function({ data }) {
       console.log('Invalid message:', data);
       return;
   }
-
-
 }

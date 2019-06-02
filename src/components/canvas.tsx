@@ -189,8 +189,9 @@ export default class Canvas extends Component<Props> {
 
     this.audioSchedulerWorker.onmessage = (message: any) => {
       // console.log('Got message from audio worker:', message);
-      if(message.data.action === 'GET_CANVAS') {
-        let canvasData = this.ctx.getImageData(0, 0, 256, 500).data;
+      let { action, payload } = message.data;
+      if(action === 'GET_CANVAS') {
+        let canvasData = this.ctx.getImageData(0, parseInt(payload.sliceStart), 256, 500).data;
         let audioCtxTime = this.props.audioContext.currentTime;
         let payloadObject = { 
           action: 'RESP_CANVAS',
@@ -201,7 +202,8 @@ export default class Canvas extends Component<Props> {
         }
         // Use transferrable feature, which is essentially pass by reference
         // helps with keeping this transaction/handoff efficient
-        this.audioSchedulerWorker.postMessage(payloadObject, [payloadObject.payload.buf]);
+        this.audioSchedulerWorker
+          .postMessage(payloadObject, [payloadObject.payload.buf]);
       }
     }
 
@@ -212,11 +214,10 @@ export default class Canvas extends Component<Props> {
     this.audioSchedulerWorker.postMessage({
       action: 'INIT_WORKER',
       payload: {
-        // canvasCtx: canvasObj.getContext('2d'),
         canvasWidth: store.canvas.width,
         canvasHeight: store.canvas.height,
         samplingBufferLookahead: 32, // Lookahead buffer of 32ms
-        samplingSliceWidth: 8,
+        samplingSliceWidth: 8, // 2 Pixels
         samplingFreq: 4410, // This will be the frequency of sampling
         // samplingFreq: 44100, // This will be the frequency of sampling
       }
@@ -252,7 +253,7 @@ export default class Canvas extends Component<Props> {
           {Object.entries(available).map(([ waveType, color ]) => <option value={waveType}>{color}</option>)}
         </select>
         <div>
-          <button onClick={this.printCanvas}>Show canvas data</button>
+          <button onClick={this.printCanvas}>Start Worker</button>
           <button onClick={() => {
             console.log('Cancel');
           }}>Cancel</button>
@@ -262,7 +263,7 @@ export default class Canvas extends Component<Props> {
              max="1" 
              step="0.01"
              value={this.freqVal}
-             onChange={(e) => {
+             onChange={(e: any) => {
                const val: number = parseFloat(e.target.value);
                this.freqVal = val;
                this.updateAudioFreq(this.freqVal * 1000);
