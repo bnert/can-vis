@@ -1,12 +1,13 @@
 html, body {
 	height: 100%;
 	width: 100%;
-	padding: 0;
+	padding: 1rem;
 	margin: 0;
 	background: #FAFAFA;
 	font-family: 'Helvetica Neue', arial, sans-serif;
 	font-weight: 400;
-	color: #444;
+  color: #444;
+  background: rgb(63, 63, 63);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
@@ -15,6 +16,9 @@ html, body {
 	box-sizing: border-box;
 }
 
-#app {
-	height: 100%;
+body {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  height: 100%;
 }

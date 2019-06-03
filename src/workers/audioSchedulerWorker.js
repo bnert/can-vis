@@ -40,7 +40,10 @@ const getCanvasData = () => {
   });
   currentSliceStart += samplingSliceWidth;
   if (currentSliceStart >= canvasWidth) {
+    // Need to reset, otherwise, there may be stale data in the buffer
     currentSliceStart = 0;
+    frequencyDataBuffer = [];
+    pixelBuffer = [];
   }
   self.setTimeout(getCanvasData, samplingFreq);
 }
@@ -85,7 +88,7 @@ const computePaintedToFreq = () => {
   let xValue = 0;
 
   // Canvas data
-  let scheduleAtTime = pixelBuffer[0].time + 0.2; // Add 20ms to when to play next
+  let scheduleAtTime = 0.2; // Add 20ms to when to play next
   let canvData = pixelBuffer[0].pxData;
   
   let nextAvailablePixel = 0;
@@ -137,11 +140,8 @@ const computePaintedToFreq = () => {
     }, 0) / tempFrequencyBuffer.length;
 
     frequencyDataBuffer.push({
-      // x: xValue,
-      // y: yValue,
       freqToPlay: 700 - freqToPlay,
       scheduleAtTime,
-      // px: compPx(canvData, currentPixel)
     });
   }
 }

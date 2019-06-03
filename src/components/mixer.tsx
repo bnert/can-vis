@@ -95,7 +95,7 @@ export default class AudioMixer extends Component<any, any> {
     //   newFreqs;
     const { newFreq, scheduleAtTime } = newFreqPayload;
     // console.log('New Freq Payload', newFreqPayload);
-    channel._nodes[0].updateFreq(newFreq, this.audioCtx.currentTime);
+    channel._nodes[0].updateFreq(newFreq, this.audioCtx.currentTime + scheduleAtTime);
     // iterable.forEach((_: any, i: number) => {
     //   channel._nodes[i].updateFreq(newFreqs[i], this.audioCtx.currentTime);
     // });
