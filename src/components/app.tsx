@@ -4,7 +4,6 @@ import pubsub from '../util/pubsub';
 
 import Canvas from './canvas';
 import Mixer from './mixer';
-import AudioNode from './audio-node';
 
 if ((module as any).hot) {
     // tslint:disable-next-line:no-var-requires
@@ -19,6 +18,46 @@ let colors = {
     traingle: 'green',
     square: 'purple',
     sawtooth: 'red',
+  }
+}
+
+
+let colorWaveTypeMap = {
+  sine: {
+    waveType: 'sine',
+    rgba: {
+      r: 2,
+      g: 165,
+      b: 219,
+      a: 204
+    }
+  },
+  triangle: {
+    waveType: 'triangle',
+    rgba: {
+      r: 2,
+      g: 165,
+      b: 78,
+      a: 204
+    }
+  },
+  square: {
+    waveType: 'square',
+    rgba: {
+      r: 219,
+      g: 2,
+      b: 2,
+      a: 204
+    }
+  },
+  sawtooth: {
+    waveType: 'sawtooth',
+    rgba: {
+      r: 183,
+      g: 9,
+      b: 171,
+      a: 204
+    }
   }
 }
 
@@ -55,7 +94,10 @@ export default class App extends Component {
      */
     audioCtx: AudioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-    /** Instantiate a new pubsub for updates */
+    /** 
+     * Instantiate a new pubsub for updates 
+     * across components
+    */
     ps = pubsub();
 
     /**   
@@ -82,66 +124,36 @@ export default class App extends Component {
       allNodesStat ?
         console.log("All nodes mounted") :
         console.log("All nodes not mounted");
-
-      console.log('channles');
-      this.ps.chs();
-      if(allNodesStat) {
-        this.allNodesStatus.forEach(el => {
-          console.log("Element ready", el);
-          this.ps.pub(el.childId, {msg: `Ready msg for ${el.childId}`});
-        });
-      }
-    }
-
-    // This is to update a child audio node with
-    // latest data for what frequency to play
-    pollToUpdateChild = () => {
-
-    }
+    } 
 
     /************************************* */
     componentDidMount() {
-      console.log('All', this.checkAllNodesMounted());
-      this.ps.chs().forEach(ch => {
-        this.ps.pub(ch, { msg: "Hello from comp did mount app"})
-      })
 
     }
 
-    public render(_ : any, { audioNodes }: any) {
-        return (
-          <div>
-            <Mixer 
-              audioContext={this.audioCtx}
-              subFn={this.ps.sub}
-            />
-            <Canvas 
-              id={'can-vis'} 
-              audioContext={this.audioCtx}
-              canvas={{
-                height: 500,
-                width: 700,
-              }}
-              publish={this.ps.pub}
-            />
-            {/* <div
-              id="mixer"
-              style={{
-                display: 'flex',
-                flexDirection: 'row'
-              }}
-            >
-              {audioNodes.map((el: any) => {
-                return <AudioNode 
-                  {...el}
-                  audioContext={this.audioCtx}
-                  mountFn={this.pollChildMounted} 
-                  subscription={this.ps.sub}
-                />
-              })}
-            </div> */}
-            
-          </div>
-        );
+    public render() {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row'
+          }}
+        >
+          <Mixer 
+            audioContext={this.audioCtx}
+            subFn={this.ps.sub}
+          />
+          <Canvas 
+            id={'can-vis'} 
+            audioContext={this.audioCtx}
+            colorWaveTypeMap={colorWaveTypeMap}
+            canvas={{
+              height: 720,
+              width: 1080,
+            }}
+            pubFn={this.ps.pub}
+          />
+        </div>
+      );
     }
 }

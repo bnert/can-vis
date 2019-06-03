@@ -1,10 +1,11 @@
 import { Component, h } from "preact";
-import soundScheduler from '../util/scheduler';
+
+import SelectButton from './canvas-button';
 
 let store = {
   canvas: {
-    height: 500,
-    width: 800,
+    height: 720,
+    width: 1080,
     data: {
       // Stuff pertaining lines will be put here?
     }
@@ -20,7 +21,8 @@ interface Props{
   id: string;
   canvas: CanvasMeta;
   audioContext: AudioContext;
-  publish(channel: string, payload: any): void;
+  colorWaveTypeMap: any;
+  pubFn(channel: string, payload: any): void;
 }
 
 export default class Canvas extends Component<Props> {
@@ -37,6 +39,18 @@ export default class Canvas extends Component<Props> {
       }
     }
   }
+
+  samplingFreq = .5;
+
+  colorWaveTypeMap = {
+    current: {
+      waveType: this.props.colorWaveTypeMap.sine.waveType,
+      rgba: this.props.colorWaveTypeMap.sine.rgba
+    }, // Corresponds to 
+    available: {
+      ...this.props.colorWaveTypeMap
+    }
+  };
 
   private initFreq = 1000;
   private ctx: any;
@@ -66,7 +80,7 @@ export default class Canvas extends Component<Props> {
     } else {
       this.initFreq = 700;
     }
-    this.addAudioNodeToMixer(this.initFreq);
+    // this.addAudioNodeToMixer(this.initFreq);
   }
 
   public handleMouseMove = (e: MouseEvent) => {
@@ -77,42 +91,28 @@ export default class Canvas extends Component<Props> {
     }
   }
 
+  rgba(rgbaObject: any) {
+    const { r, g, b, a }: any = rgbaObject;
+    return `rgba(${r}, ${g}, ${b}, ${a})`
+  }
+
   // Private
   private paint = (x: number, y: number) => {
     if(!this.ctx) return;
-    const { current, available }: any = this.state.colorsWaveTypeMap;
+    const { current }: any = this.colorWaveTypeMap;
 
     this.ctx.lineTo(x, y);
-    this.ctx.strokeStyle = available[current];
+    this.ctx.strokeStyle = this.rgba(current.rgba);
     this.ctx.lineWidth = 4;
     this.ctx.stroke();
   }
 
-  private handleSelectChange = (e: Event) => {
-    const target: any = e.target;
-    target && target.value ?
-      this.setState({ ...this.state, colorsWaveTypeMap: { 
-        current: target.value,
-        available: this.state.colorsWaveTypeMap.available
-      }}):
-      null;
+  private handleColorChange = (newCurrent: any) => {
+    this.colorWaveTypeMap.current = newCurrent;
+    console.log(this.colorWaveTypeMap)
   }
 
-  private printCanvas = () => {
-    // const { height, width } = this.props.canvas;
-    // const ctx = this.ctx.getImageData(0, 0, height, width);
-    // let pixelBuff: number[] = [];
-    // console.log(ctx.data.filter((el: number, i: number): boolean => {
-    //   if (el > 0 ) {
-    //     pixelBuff.push(i);
-    //     return true;
-    //   }
-    //   return false
-    // }))
-    // console.log(pixelBuff);
-
-    // this.props.publish('ch-1', { action: 'UPDATE_FREQ', data: this.initFreq})
-    // this.initFreq -= 100;
+  private startAudioWorker = () => {
     console.log("Starting Audio Scheduler Worker");
     this.audioSchedulerWorker.postMessage({
       action: 'START_WORKER',
@@ -121,27 +121,15 @@ export default class Canvas extends Component<Props> {
 
   }
 
-  private addAudioNodeToMixer = (initFreq: number) => {
-    const { current } = this.state.colorsWaveTypeMap;
-    // Shim until state can by dynamic
-    const waves: any = {
-      sine: 'sine',
-      triangle: 'triangle',
-      square: 'square',
-      sawtooth: 'sawtooth'
-    };
-
-    // this.props.publish('mixerEvent', { 
-    //   action: 'ADD_OSC', 
-    //   data: {
-    //     channel: waves[current],
-    //     initFreq
-    //   } 
-    // })
-    // this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
+  updateSamplingFrequency = (newSamplingFreq: number) => {
+    this.audioSchedulerWorker.postMessage({
+      action: 'UPDATE_SAMPFREQ',
+      payload: {
+        newSamplingFreq
+      }
+    })
   }
 
-  freqVal = 440;
   private updateAudioFreq = (payload: any) => {
     const { current } = this.state.colorsWaveTypeMap;
     // Shim until state can by dynamic
@@ -152,7 +140,7 @@ export default class Canvas extends Component<Props> {
       sawtooth: 'sawtooth'
     };
 
-    this.props.publish('mixerEvent', { 
+    this.props.pubFn('mixerEvent', { 
       action: 'UPDATE_OSCFRQ', 
       data: {
         channel: 'sine',
@@ -163,11 +151,7 @@ export default class Canvas extends Component<Props> {
         }
       } 
     })
-    // this.props.publish(waves[current], { action: 'ADD_NODE', data: null })
-  }
-
-  private pushComputedFrequenciesToNodes = () => {
-
+    // this.props.pubFn(waves[current], { action: 'ADD_NODE', data: null })
   }
 
 
@@ -179,17 +163,17 @@ export default class Canvas extends Component<Props> {
       canvasObj.width = store.canvas.width;
       canvasObj.height = store.canvas.height;
       this.ctx = canvasObj.getContext('2d');
-      // this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
+      this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
 
       // So that way we have some sore of baseline for
       // what to expect from the UI
-      if(test){
-        this.ctx.fillStyle = 'aquamarine'
-        this.ctx.fillRect(0, 490, 20, 4);
-      }
+      // if(test){
+      //   this.ctx.fillStyle = 'aquamarine'
+      //   this.ctx.fillRect(0, 490, 20, 4);
+      // }
     }
     
-    const pub = this.props.publish;
+    const pub = this.props.pubFn;
 
     this.audioSchedulerWorker.onmessage = (message: any) => {
       // console.log('Got message from audio worker:', message);
@@ -211,7 +195,7 @@ export default class Canvas extends Component<Props> {
         this.audioSchedulerWorker
           .postMessage(payloadObject, [payloadObject.payload.buf]);
       } else if( action === 'UPDATE_OSCFREQ') {
-        console.log('Updated freq to', payload.freqToPlay);
+        // console.log('Updated freq to', payload.freqToPlay);
         this.updateAudioFreq(payload);
       }
     }
@@ -223,11 +207,10 @@ export default class Canvas extends Component<Props> {
     this.audioSchedulerWorker.postMessage({
       action: 'INIT_WORKER',
       payload: {
-        canvasWidth: store.canvas.width,
-        canvasHeight: store.canvas.height,
+        canvasWidth: this.props.canvas.width,
+        canvasHeight: this.props.canvas.height,
         samplingBufferLookahead: 32, // Lookahead buffer of pixels
         samplingSliceWidth: 4, // 2 Pixels
-        // samplingFreq: 4410, // This will be the frequency of sampling
         samplingFreq: 441, // This will be the frequency of sampling
       }
     })
@@ -240,17 +223,37 @@ export default class Canvas extends Component<Props> {
     return false;
   }
 
-  public render({ id, canvas }: Props) {
+  public render({ id, canvas, colorWaveTypeMap }: Props) {
     const { available }: {
       available: {}
     } = this.state.colorsWaveTypeMap;
     
     return (
-      <div>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row'
+        }}
+      >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateRows: 'repeat(4, 1fr)'
+          }}
+        >
+          {Object.values(colorWaveTypeMap).map((el: any) => {
+            return <SelectButton 
+              value={el.waveType}
+              waveType={el.waveType}
+              bgRgba={el.rgba}
+              onClick={this.handleColorChange}
+            />
+          })}
+        </div>
         <canvas
           id={id}
           style={{
-            background: 'lightgrey',
+            background: 'rgb(91, 91, 91)',
             height: canvas.height,
             width: canvas.width
           }}
@@ -258,26 +261,36 @@ export default class Canvas extends Component<Props> {
           onMouseUp={this.handleMouseUp}
           onMouseMove={this.handleMouseMove}
         ></canvas>
-        <select onChange={this.handleSelectChange}>
-          {Object.entries(available).map(([ waveType, color ]) => <option value={waveType}>{color}</option>)}
-        </select>
-        <div>
-          <button onClick={this.printCanvas}>Start Worker</button>
-          <button onClick={() => {
-            console.log('Cancel');
-          }}>Cancel</button>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateRows: '75% 25%'
+          }}
+        >
           <input 
+            style={{
+              // transform: 'rotate(90deg)',
+              height: '90%',
+              WebkitAppearance: 'slider-vertical'
+            }}
+            orient="vertical"
             type="range" 
-             min="0" 
-             max="1" 
-             step="0.01"
-             value={this.freqVal}
-             onChange={(e: any) => {
-               const val: number = parseFloat(e.target.value);
-               this.freqVal = val;
-               this.updateAudioFreq(this.freqVal * 1000);
-             }}
-            />
+            min="0" 
+            max="1" 
+            step="0.01"
+            value={this.samplingFreq}
+            onChange={(e: any) => {
+              const val: number = parseFloat(e.target.value);
+              this.samplingFreq = val;
+              // this.updateAudioFreq(this.samplingFreq * 1000);
+              console.log('New Samp', this.samplingFreq * 44100);
+              this.updateSamplingFrequency(this.samplingFreq * 44100);
+            }}
+          />
+            <div>
+              <button onClick={this.startAudioWorker}>Play</button>
+              <button onClick={() => {console.log('Cancel');}}>Pause</button>
+            </div>
         </div>
       </div>
     )

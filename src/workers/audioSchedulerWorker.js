@@ -147,10 +147,6 @@ const computePaintedToFreq = () => {
 }
 
 const sendFreqDataToCanvas = () => {
-  // console.log({
-  //   action: 'UPDATE_OSCFREQ',
-  //   payload: frequencyDataBuffer[0]
-  // })
   self.postMessage({
     action: 'UPDATE_OSCFREQ',
     payload: frequencyDataBuffer[0]
@@ -159,26 +155,24 @@ const sendFreqDataToCanvas = () => {
 
 let test = false;
 const computeFrequencyData = () => {
-  // if(test) {
-  //   console.log('Current Px Buffer: ', pixelBuffer);
-  //   console.log('Current Freq Buffer: ', frequencyDataBuffer);
-  // }
-
 
   // These functions grab data from the
   // global variables.
   computePaintedToFreq();
+
   if(frequencyDataBuffer.length > 0) {
     sendFreqDataToCanvas();
-    
+    frequencyDataBuffer.splice(0, 1);
   } else {
     // Send a mute signal
   }
 
-
-  // Remove data that has been sent
-  pixelBuffer.splice(0, 1); // Better perf than unshift
-  frequencyDataBuffer.splice(0, 1);
+  if (pixelBuffer.length > 0) {
+    // Remove data that has been sent
+    pixelBuffer.splice(0, 1); // Better perf than unshift
+  } else {
+    // Do nothing
+  }
 
   currentAudioClockTime += samplingFreq;
   self.setTimeout(computeFrequencyData, samplingFreq);
@@ -204,6 +198,10 @@ self.onmessage = function({ data }) {
     case 'RESP_CANVAS':
         // Payload will be a Uint8Array buffer
         pushSampledDataToBuffer(payload);
+      break;
+    case 'UPDATE_SAMPFREQ':
+      samplingFreq = ( 1 / payload.newSamplingFreq ) * 1000;
+      console.log('New Sampling Freq', samplingFreq);
       break;
     case 'INIT_WORKER':
       // Want to initialize data upon creation of the

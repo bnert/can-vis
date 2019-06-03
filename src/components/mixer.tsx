@@ -94,8 +94,8 @@ export default class AudioMixer extends Component<any, any> {
     //   channel._nodes :
     //   newFreqs;
     const { newFreq, scheduleAtTime } = newFreqPayload;
-    console.log('New Freq Payload', newFreqPayload);
-    channel._nodes[0].updateFreq(newFreq, scheduleAtTime)
+    // console.log('New Freq Payload', newFreqPayload);
+    channel._nodes[0].updateFreq(newFreq, this.audioCtx.currentTime);
     // iterable.forEach((_: any, i: number) => {
     //   channel._nodes[i].updateFreq(newFreqs[i], this.audioCtx.currentTime);
     // });
@@ -149,11 +149,17 @@ export default class AudioMixer extends Component<any, any> {
 
   render() {
     return (
-      <div>
-        <h3>MIXER</h3>
+      <div
+        style={{
+          alignItems: 'center',
+          display: 'grid',
+          gridTemplateRows: 'repeat(4, 1fr)'
+        }}
+      >
+        {/* <h3>MIXER</h3>
         <button onClick={() => {
           console.log(this.channels);
-        }}>show</button>
+        }}>show</button> */}
         {Object.entries(this.channels).map(channel => {
           return <MixerChannel 
             // Values  
