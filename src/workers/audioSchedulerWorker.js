@@ -75,6 +75,21 @@ const compPx = (pxArray, i) => ({
   a: pxArray[i + 3]
 })
 
+const nearestTenth = (value) => Math.floor(value / 10) * 10
+
+/**
+ * Use this to create a hash for
+ * pixels that have already been computed.
+ *
+ * Using this, the program will not have to
+ * sift through various frequency data,
+ * but will only have to use one.
+ *
+ * @param {object} rgba data
+ */
+const fmtPxData = ({ r, g, b, a }) => {
+	return `${nearestTenth(r)}-${nearestTenth(g)}-${nearestTenth(b)}`;
+}
 
 // Pixel data reads:
 // left -> right, then top -> bottom
@@ -93,6 +108,8 @@ const computePaintedToFreq = () => {
   
   let nextAvailablePixel = 0;
   let tempFrequencyBuffer = [];
+	let tempPxBuffer = [];
+	let computedPxDataHash = {};
   /**
    * If we iterate through only a pixel at a time,
    * and only take a single column are 
@@ -111,7 +128,8 @@ const computePaintedToFreq = () => {
     
     // We know we hit a new pixel,
     // Otherwise we want to skip over
-    // other pixel data
+		// other pixel data
+		// pixel is current a 4px x 4px block 
     if(nextAvailablePixel === 0) {
       // console.log('Current Pixel', currentPixel);
       nextAvailablePixel = 12;
@@ -121,20 +139,32 @@ const computePaintedToFreq = () => {
     }
 
     // Dividing by 4 gets number of actual pixels,
-    // diving by another 4 gets the number of 4 x 4 chunks
+    // diving by another 4 gets the number of 4px x 4px chunks
     yValue = (currentPixel / 4) / 4;
     xValue = currentPixel % 4; // value will always be zero; Needed?
 
-    // Start simple and only compute the leftmost pixel
+		let pxData = compPx(canvData, currentPixel);
+		let pxDataHashKey = fmtPxData(pxData);
+
+
+		// Start simple and only compute the leftmost pixel
     // value
-    if(xValue % 4 === 0) {
-      tempFrequencyBuffer.push(yValue);
+		if(xValue % 4 === 0) {
+			console.log(computedPxDataHash);			
+			if(!computedPxDataHash[pxDataHashKey]) {
+				tempFrequencyBuffer.push(yValue);
+				computedPxDataHash[fmtPxData(pxData)] = yValue;
+				tempPxBuffer.push(compPx(canvData, currentPixel));
+			}
     }
   }
 
   // Get the average accross the sampled
   // frequencies, in order to have a consistent frequency to play
-  if(tempFrequencyBuffer.length >= 4) {
+	if(tempFrequencyBuffer.length >= 4) {
+		console.log('tempFreq:', tempFrequencyBuffer);
+		console.log('tempPx:', tempPxBuffer);
+		console.log('computedPxHash', computedPxDataHash);			
     freqToPlay = tempFrequencyBuffer.reduce((avgAcc, currFreq) => {
       return avgAcc + currFreq;
     }, 0) / tempFrequencyBuffer.length;
@@ -143,7 +173,8 @@ const computePaintedToFreq = () => {
       freqToPlay: 700 - freqToPlay,
       scheduleAtTime,
     });
-  }
+	}
+	tempFrequencyBuffer.splice(0, tempFrequencyBuffer.length); // Clears it out, just to be sure
 }
 
 const sendFreqDataToCanvas = () => {
