@@ -22,6 +22,10 @@ let colors = {
 }
 
 
+// To get freq by value,
+// from the data sent back by the worker,
+// compare the keys of object against each
+// color value (rgb) rounded to the tenth
 let colorWaveTypeMap = {
   sine: {
     waveType: 'sine',
@@ -29,8 +33,8 @@ let colorWaveTypeMap = {
       r: 2,
       g: 165,
       b: 219,
-      a: 204
-    }
+      a: 255
+    } // unique value: 386
   },
   triangle: {
     waveType: 'triangle',
@@ -38,26 +42,26 @@ let colorWaveTypeMap = {
       r: 2,
       g: 165,
       b: 78,
-      a: 204
-    }
+      a: 255
+    } // u.v: 245
   },
   square: {
     waveType: 'square',
     rgba: {
-      r: 219,
+      r: 215,
       g: 2,
       b: 2,
-      a: 204
-    }
+      a: 255
+    } // u.v: 223
   },
   sawtooth: {
     waveType: 'sawtooth',
     rgba: {
-      r: 183,
-      g: 9,
-      b: 171,
-      a: 204
-    }
+      r: 247,
+      g: 75,
+      b: 138,
+      a: 255
+    } // u.v: 363
   }
 }
 

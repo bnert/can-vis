@@ -13,7 +13,7 @@ const channelFactory = (channelNumber: number, name: string) => {
       volume: .2,
       muted: true
     },
-    _nodes: []
+    node: null
   }
 }
 
@@ -38,69 +38,84 @@ export default class AudioMixer extends Component<any, any> {
     volRangeStep: 0.01
   }
 
+  sinKey = '0-160-210';
+  triKey = '0-160-70';
+  squKey = '210-0-0';
+  sawKey = '240-70-130';
+
   channels: any = {
-    sine: channelFactory(0, 'sine'),
-    triangle: channelFactory(1, 'triangle'),
-    square: channelFactory(2, 'square'),
-    sawtooth: channelFactory(3, 'sawtooth'),
+    [this.sinKey]: channelFactory(0, 'sine'),
+    [this.triKey]: channelFactory(1, 'triangle'),
+    [this.squKey]: channelFactory(2, 'square'),
+    [this.sawKey]: channelFactory(3, 'sawtooth'),
   };
 
   addNodeToChannel(channel: string, initFreq: number) {
-    console.log('Adding to:', channel, initFreq);
-    this.channels[channel]._nodes.push(
-      AudioNodeInstance(
-        defaultAudioNodeSettings(
-          this.audioCtx,
-          channel as OscillatorType,
-          initFreq
-        )
+    // console.log('Adding to:', channel, initFreq);
+    // this.channels[channel]._nodes.push(
+      
+    // );
+    let ch = this.channels[channel];
+    console.log('Adding:', ch.name);
+    ch.node = AudioNodeInstance(
+      defaultAudioNodeSettings(
+        this.audioCtx,
+        ch.name as OscillatorType,
+        initFreq
       )
     );
-    const nodesLength = this.channels[channel]._nodes.length;
-    this.channels[channel]._nodes[nodesLength - 1].start();
-    this.channels[channel].audioAttrs.muted ?
-      this.channels[channel]._nodes[nodesLength - 1].mute() :
+    // const nodesLength = this.channels[channel]._nodes.length;
+    ch.node.start();
+    ch.audioAttrs.muted ?
+      ch.node.mute():
       null; // Second option suppressed mute
   }
 
-  muteChannelNodes = (channelName: string) => {
-    console.log('Muting...', channelName);
-    this.channels[channelName].audioAttrs.muted = true;
-    this.channels[channelName]._nodes.forEach((node: any) => {
-      node.mute();
-    })
+  muteChannelNodes = (channel: string) => {
+    console.log('Muting...', channel);
+    this.channels[channel].audioAttrs.muted = true;
+    this.channels[channel].node.mute();
   }
 
-  unmuteChannelNodes = (channelName: string) => {
-    console.log('UnMuting...', channelName);
-    this.channels[channelName].audioAttrs.muted = false;
-    this.channels[channelName]._nodes.forEach((node: any) => {
-      node.unmute();
-    })
+  unmuteChannelNodes = (channel: string) => {
+    console.log('UnMuting...', channel);
+    this.channels[channel].audioAttrs.muted = false;
+    this.channels[channel].node.unmute();
   }
 
-  updateChannelVol = (channelName: string, newVolume: number) => {
-    this.channels[channelName].audioAttrs.volume = newVolume;
-    this.channels[channelName]._nodes.forEach((node: any) => {
-      node.updateVolume(newVolume, this.audioCtx.currentTime);
-    })
+  updateChannelVol = (channel: string, newVolume: number) => {
+    this.channels[channel].audioAttrs.volume = newVolume;
+    this.channels[channel].node.updateVolume(newVolume, this.audioCtx.currentTime);
   }
 
-  updateNodeFreq = (channelName: string, newFreqPayload: any) => {
-    let channel = this.channels[channelName];
-    // Want to iterate over the one with the least
-    // length to avoid bounds error
-    // let iterable = newFreqs.length > channel._nodes.length ?
-    //   channel._nodes :
-    //   newFreqs;
-    const { newFreq, scheduleAtTime } = newFreqPayload;
-    // console.log('New Freq Payload', newFreqPayload);
-    channel._nodes[0].updateFreq(newFreq, this.audioCtx.currentTime + scheduleAtTime);
+  updateNodeFreq = (freqData: any) => {
+    // let channel = this.channels[channelName];
+    // const { newFreq, scheduleAtTime } = newFreqPayload;
+    // channel._nodes[0].updateFreq(newFreq, this.audioCtx.currentTime + scheduleAtTime);
     // iterable.forEach((_: any, i: number) => {
     //   channel._nodes[i].updateFreq(newFreqs[i], this.audioCtx.currentTime);
     // });
+    if(freqData) {
+      // console.log('Freq Data', freqData);
+    }
+    Object.entries(freqData).forEach(([ color, freq ]) => {
+      if(this.channels[color].node){
+        if(freq && typeof freq === 'number'){
+          console.log('Freq', freq);
+          this.channels[color].node.updateFreq(freq, this.audioCtx.currentTime);
+          if(this.channels[color].audioAttrs.muted) {
+            // this.channels[color].node.unmute();
+            // this.channels[color].node.audioAttrs.muted = false;
+          }
+        } else {
+          // this.channels[color].node.mute();
+          // this.channels[color].node.audioAttrs.muted = true;
+        }
+      }
+    })
   }
 
+  counter = 0;
   // This fuction is mainly implemented to provide an
   // interface event 'parser' between the canvas and mixer
   decideAction = (ev: any) => {
@@ -115,8 +130,13 @@ export default class AudioMixer extends Component<any, any> {
           this.addNodeToChannel(data.channel || 'sine', data.initFreq || 440);
           break;
         case 'UPDATE_OSCFRQ':
-          // console.log('update', data);
-          this.updateNodeFreq(data.channel, data.oscData);
+          // console.log('counter: ', this.counter)
+          if(data[this.sinKey] || data[this.triKey] || data[this.squKey] || data[this.sawKey]) {
+            // console.log('Update:', data);
+          }
+          this.counter += 1;
+          this.updateNodeFreq(data);
+          // console.log('update');
           break;
         default:
           console.log(`Mixer: ${action} action not specified`);
@@ -133,7 +153,28 @@ export default class AudioMixer extends Component<any, any> {
     this.decideAction({
       action: 'ADD_OSC',
       data: {
-        channel: 'sine',
+        channel: this.sinKey,
+        initFreq: 200
+      }
+    })
+    this.decideAction({
+      action: 'ADD_OSC',
+      data: {
+        channel: this.triKey,
+        initFreq: 200
+      }
+    })
+    this.decideAction({
+      action: 'ADD_OSC',
+      data: {
+        channel: this.squKey,
+        initFreq: 200
+      }
+    })
+    this.decideAction({
+      action: 'ADD_OSC',
+      data: {
+        channel: this.sawKey,
         initFreq: 200
       }
     })

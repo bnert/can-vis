@@ -142,14 +142,7 @@ export default class Canvas extends Component<Props> {
 
     this.props.pubFn('mixerEvent', { 
       action: 'UPDATE_OSCFRQ', 
-      data: {
-        channel: 'sine',
-        // channel: waves[current],
-        oscData: {
-          scheduleAtTime: payload.scheduleAtTime,
-          newFreq: payload.freqToPlay
-        }
-      } 
+      data: payload
     })
     // this.props.pubFn(waves[current], { action: 'ADD_NODE', data: null })
   }
@@ -180,7 +173,7 @@ export default class Canvas extends Component<Props> {
       let { action, payload } = message.data;
       if(action === 'GET_CANVAS') {
         // console.log("Sampling Frame: ", parseInt(payload.sliceStart), 0, 4, 500);
-        let canvasData = this.ctx.getImageData(parseInt(payload.sliceStart), 0, 4, 500).data;
+        let canvasData = this.ctx.getImageData(parseInt(payload.sliceStart), 0, 4, this.props.canvas.height).data;
         let audioCtxTime = this.props.audioContext.currentTime;
         let payloadObject = { 
           action: 'RESP_CANVAS',
@@ -194,7 +187,7 @@ export default class Canvas extends Component<Props> {
         // helps with keeping this transaction/handoff efficient
         this.audioSchedulerWorker
           .postMessage(payloadObject, [payloadObject.payload.buf]);
-      } else if( action === 'UPDATE_OSCFREQ') {
+      } else if( action === 'UPDATE_OSCFRQ') {
         // console.log('Updated freq to', payload.freqToPlay);
         this.updateAudioFreq(payload);
       }
@@ -269,11 +262,10 @@ export default class Canvas extends Component<Props> {
         >
           <input 
             style={{
-              // transform: 'rotate(90deg)',
               height: '90%',
               WebkitAppearance: 'slider-vertical'
             }}
-            orient="vertical"
+            orient="vertical" // Only for Firefox
             type="range" 
             min="0" 
             max="1" 

@@ -2,8 +2,7 @@
  * Web Worker for computing data sent by the canvas
  */
 // It isn't usually the best to have global variables,
-// however, in this context, we do need to asign out some
-// globals in order to check 
+// however, in this context, we do need to asign out some // globals in order to check 
 
 // Housekeeping
 let initialized = false;
@@ -24,6 +23,25 @@ let currentSliceStart = 0;
 let samplingBufferLookahead = 0;
 let samplingSliceWidth = 0;
 let samplingFreq = 0;
+
+/**
+ * We want a hash map of buffers for each
+ * color value, that way instead of interleaving
+ * seperate values, we can batch them in a single
+ * package.
+ */
+// First let's list key variables for
+// ease of using:
+const sinKey = '0-160-210';
+const triKey = '0-160-70';
+const squKey = '210-0-0';
+const sawKey = '240-70-130';
+let sampleBufferHash = {
+	[sinKey]: [], // sine blue
+	[triKey]: [], // triangle green
+	[squKey]: [], // square red
+	[sawKey]: [] // saw purple
+}
 
 /**
  * This is meant to poll the canvas for its
@@ -99,6 +117,7 @@ const fmtPxData = ({ r, g, b, a }) => {
 const computePaintedToFreq = () => {
   if(!pixelBuffer[0]) return;
 
+	console.log('Computing...');
   let yValue = 0;
   let xValue = 0;
 
@@ -122,8 +141,12 @@ const computePaintedToFreq = () => {
         canvData[currentPixel] === 0 &&
         canvData[currentPixel + 1] === 0 &&
         canvData[currentPixel + 2] === 0
-      ) {
-      continue;
+		) {
+						// console.log('Pixel coninue');
+						if(canvData[currentPixel] > 0 && canvData[currentPixel + 1] > 0 && canvData[currentPixel + 2] > 0 ){
+							console.log('Pixel Continue on valid Pixel');
+						}			
+			continue;
     }
     
     // We know we hit a new pixel,
@@ -131,8 +154,7 @@ const computePaintedToFreq = () => {
 		// other pixel data
 		// pixel is current a 4px x 4px block 
     if(nextAvailablePixel === 0) {
-      // console.log('Current Pixel', currentPixel);
-      nextAvailablePixel = 12;
+			nextAvailablePixel = 12;
     } else {
       nextAvailablePixel -= 4;
       continue;
@@ -148,23 +170,28 @@ const computePaintedToFreq = () => {
 
 
 		// Start simple and only compute the leftmost pixel
-    // value
+					// value
 		if(xValue % 4 === 0) {
-			console.log(computedPxDataHash);			
+			// Will keep from writing to the same key
+			// a bunch of times
 			if(!computedPxDataHash[pxDataHashKey]) {
+				// This top one is what we'll end up sending
+				computedPxDataHash[fmtPxData(pxData)] = 700 - yValue;
 				tempFrequencyBuffer.push(yValue);
-				computedPxDataHash[fmtPxData(pxData)] = yValue;
 				tempPxBuffer.push(compPx(canvData, currentPixel));
+			} else {
+				// console.log('Skipped...', fmtPxData(pxData));
 			}
     }
   }
 
   // Get the average accross the sampled
   // frequencies, in order to have a consistent frequency to play
+	
 	if(tempFrequencyBuffer.length >= 4) {
-		console.log('tempFreq:', tempFrequencyBuffer);
-		console.log('tempPx:', tempPxBuffer);
-		console.log('computedPxHash', computedPxDataHash);			
+		// console.log('tempFreq:', tempFrequencyBuffer);
+		// console.log('tempPx:', tempPxBuffer);
+		// console.log('computedPxHash', computedPxDataHash);			
     freqToPlay = tempFrequencyBuffer.reduce((avgAcc, currFreq) => {
       return avgAcc + currFreq;
     }, 0) / tempFrequencyBuffer.length;
@@ -174,15 +201,44 @@ const computePaintedToFreq = () => {
       scheduleAtTime,
     });
 	}
+
+	Object.entries(computedPxDataHash).forEach(([ color, freq ]) => {
+    // If the color doesn't exists, don't but it in the buffer
+    if(sampleBufferHash[color]) {
+			sampleBufferHash[color].push(freq);
+		}
+	})
+
 	tempFrequencyBuffer.splice(0, tempFrequencyBuffer.length); // Clears it out, just to be sure
 }
 
 const sendFreqDataToCanvas = () => {
-  self.postMessage({
-    action: 'UPDATE_OSCFREQ',
-    payload: frequencyDataBuffer[0]
-  })
+  // self.postMessage({
+  //   action: 'UPDATE_OSCFREQ',
+  //   payload: frequencyDataBuffer[0]
+  // })
 }
+
+const sendComputedFreqData = () => {
+  // console.log(sampleBufferHash);
+  self.postMessage({
+    action: 'UPDATE_OSCFRQ',
+    payload: {
+      [sinKey]: sampleBufferHash[sinKey][0],
+      [triKey]: sampleBufferHash[triKey][0],
+      [squKey]: sampleBufferHash[squKey][0],
+      [sawKey]: sampleBufferHash[sawKey][0]
+    }
+  })
+
+  // Mutates each array, getting rid of first
+  // element
+  sampleBufferHash[sinKey].shift()
+  sampleBufferHash[triKey].shift()
+  sampleBufferHash[squKey].shift()
+  sampleBufferHash[sawKey].shift()
+}
+
 
 let test = false;
 const computeFrequencyData = () => {
@@ -190,6 +246,8 @@ const computeFrequencyData = () => {
   // These functions grab data from the
   // global variables.
   computePaintedToFreq();
+	sendComputedFreqData();
+	
 
   if(frequencyDataBuffer.length > 0) {
     sendFreqDataToCanvas();
@@ -205,6 +263,7 @@ const computeFrequencyData = () => {
     // Do nothing
   }
 
+				// console.log('sampleBufferHash: ', sampleBufferHash);
   currentAudioClockTime += samplingFreq;
   self.setTimeout(computeFrequencyData, samplingFreq);
 }
