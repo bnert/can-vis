@@ -22,3 +22,34 @@ body {
   justify-content: center;
   height: 100%;
 }
+
+.app-canvas {
+  border-radius: .4rem;
+  box-shadow: inset 0px 3px 4px rgba(0, 0, 0, .2);
+}
+
+.canvas-button__container {
+  align-items: center;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  justify-items: center;
+}
+
+.canvas-button {
+  border: none;
+  border-radius: .4rem;
+  display: block;
+  margin: 0 1.2rem;
+  width: 12rem;
+  height: 12rem;
+  outline: none;
+  transition: .0001s; /* Makes it slightly more realistic*/
+}
+
+.canvas-button--active {
+  opacity: 1;
+}
+
+.canvas-button--inactive {
+  opacity: .6;
+}

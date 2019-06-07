@@ -23,6 +23,7 @@ interface Props{
   audioContext: AudioContext;
   colorWaveTypeMap: any;
   pubFn(channel: string, payload: any): void;
+  subFn(channel: string, payload: any): void;
 }
 
 export default class Canvas extends Component<Props> {
@@ -171,7 +172,7 @@ export default class Canvas extends Component<Props> {
         canvasHeight: this.props.canvas.height,
         samplingBufferLookahead: 32, // Lookahead buffer of pixels -> not used at the moment
         samplingSliceWidth: 4, // 1 Pixel, due to a pixel being composed of a 4x4 pixel area
-        samplingFreq: 441, // This will be the initial frequency of sampling the canvas
+        samplingFreq: 4410, // This will be the initial frequency of sampling the canvas
       }
     })
 
@@ -192,21 +193,22 @@ export default class Canvas extends Component<Props> {
         }}
       >
         <div
-          style={{
-            display: 'grid',
-            gridTemplateRows: 'repeat(4, 1fr)'
-          }}
+          className={`canvas-button__container`}
         >
-          {Object.values(colorWaveTypeMap).map((el: any) => {
-            return <SelectButton 
+          {Object.values(colorWaveTypeMap).map((el: any, index: number) => {
+            return <SelectButton
               value={el.waveType}
               waveType={el.waveType}
               bgRgba={el.rgba}
+              active={index === 0 ? true : false}
               onClick={this.handleColorChange}
+              pubFn={this.props.pubFn}
+              subFn={this.props.subFn}
             />
           })}
         </div>
         <canvas
+          className={`app-canvas`}
           id={id}
           style={{
             background: 'rgb(91, 91, 91)',

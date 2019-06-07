@@ -100,6 +100,7 @@ export default class App extends Component {
               width: 1080,
             }}
             pubFn={this.ps.pub}
+            subFn={this.ps.sub}
           />
         </div>
       );

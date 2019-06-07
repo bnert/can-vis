@@ -190,7 +190,7 @@ export default class AudioMixer extends Component<any, any> {
         }}
       >
         {Object.entries(this.channels).map(channel => {
-          return <MixerChannel 
+          return <MixerChannel
             // Values  
             channelName={channel[0]}
             {...channel[1]} 

@@ -7,6 +7,8 @@ interface IMixerChannelProps {
   volume: number;
   audioAttrs: any;
   volRangeStep: number;
+  pubFn: any;
+  subFn: any;
   handleMute(channelName: string): void;
   handleUnMute(channelName: string): void;
   handleVolumeChange(channelName: string, newVol: number): void;
@@ -37,7 +39,7 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
       ...this.state,
       volume: this.props.audioAttrs.volume,
       muted: this.props.audioAttrs.muted
-    })
+    });
   }
 
   render(props: IMixerChannelProps) {

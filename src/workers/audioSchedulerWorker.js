@@ -37,10 +37,10 @@ const triKey = '0-160-70';
 const squKey = '210-0-0';
 const sawKey = '240-70-130';
 let sampleBufferHash = {
-	[sinKey]: [], // sine blue
-	[triKey]: [], // triangle green
-	[squKey]: [], // square red
-	[sawKey]: [] // saw purple
+  [sinKey]: [], // sine blue
+  [triKey]: [], // triangle green
+  [squKey]: [], // square red
+  [sawKey]: [] // saw purple
 }
 
 /**
@@ -50,7 +50,7 @@ let sampleBufferHash = {
  * the worker and the canvas component.
  */
 const getCanvasData = () => {
-  self.postMessage({ 
+  self.postMessage({
     action: 'GET_CANVAS',
     payload: {
       sliceStart: currentSliceStart
@@ -86,7 +86,7 @@ const pushSampledDataToBuffer = (payload) => {
  * @param {*} pxArray 
  * @param {*} i 
  */
-const compPx = (pxArray, i) => ({ 
+const compPx = (pxArray, i) => ({
   r: pxArray[i],
   g: pxArray[i + 1],
   b: pxArray[i + 2],
@@ -106,7 +106,7 @@ const nearestTenth = (value) => Math.floor(value / 10) * 10
  * @param {object} rgba data
  */
 const fmtPxData = ({ r, g, b, a }) => {
-	return `${nearestTenth(r)}-${nearestTenth(g)}-${nearestTenth(b)}`;
+  return `${nearestTenth(r)}-${nearestTenth(g)}-${nearestTenth(b)}`;
 }
 
 // Pixel data reads:
@@ -115,46 +115,41 @@ const fmtPxData = ({ r, g, b, a }) => {
 // then each row would be split up into 200 indices in
 // the array before getting to the next row.
 const computePaintedToFreq = () => {
-  if(!pixelBuffer[0]) return;
+  if (!pixelBuffer[0]) return;
 
-	console.log('Computing...');
   let yValue = 0;
   let xValue = 0;
 
   // Canvas data
   let scheduleAtTime = 0.2; // Add 20ms to when to play next
   let canvData = pixelBuffer[0].pxData;
-  
+
   let nextAvailablePixel = 0;
   let tempFrequencyBuffer = [];
-	let tempPxBuffer = [];
-	let computedPxDataHash = {};
+  let tempPxBuffer = [];
+  let computedPxDataHash = {};
   /**
    * If we iterate through only a pixel at a time,
    * and only take a single column are 
    */
-  for(let currentPixel = 0; currentPixel < canvData.length; currentPixel += 4) {
+  for (let currentPixel = 0; currentPixel < canvData.length; currentPixel += 4) {
 
     // Move onto next pixel,
     // bcs we have hit a blank one
-    if(
-        canvData[currentPixel] === 0 &&
-        canvData[currentPixel + 1] === 0 &&
-        canvData[currentPixel + 2] === 0
-		) {
-						// console.log('Pixel coninue');
-						if(canvData[currentPixel] > 0 && canvData[currentPixel + 1] > 0 && canvData[currentPixel + 2] > 0 ){
-							console.log('Pixel Continue on valid Pixel');
-						}			
-			continue;
+    if (
+      canvData[currentPixel] === 0 &&
+      canvData[currentPixel + 1] === 0 &&
+      canvData[currentPixel + 2] === 0
+    ) {
+      continue;
     }
-    
+
     // We know we hit a new pixel,
     // Otherwise we want to skip over
-		// other pixel data
-		// pixel is current a 4px x 4px block 
-    if(nextAvailablePixel === 0) {
-			nextAvailablePixel = 12;
+    // other pixel data
+    // pixel is current a 4px x 4px block 
+    if (nextAvailablePixel === 0) {
+      nextAvailablePixel = 12;
     } else {
       nextAvailablePixel -= 4;
       continue;
@@ -165,59 +160,56 @@ const computePaintedToFreq = () => {
     yValue = (currentPixel / 4) / 4;
     xValue = currentPixel % 4; // value will always be zero; Needed?
 
-		let pxData = compPx(canvData, currentPixel);
-		let pxDataHashKey = fmtPxData(pxData);
+    let pxData = compPx(canvData, currentPixel);
+    let pxDataHashKey = fmtPxData(pxData);
 
 
-		// Start simple and only compute the leftmost pixel
-					// value
-		if(xValue % 4 === 0) {
-			// Will keep from writing to the same key
-			// a bunch of times
-			if(!computedPxDataHash[pxDataHashKey]) {
-				// This top one is what we'll end up sending
-				computedPxDataHash[fmtPxData(pxData)] = 700 - yValue;
-				tempFrequencyBuffer.push(yValue);
-				tempPxBuffer.push(compPx(canvData, currentPixel));
-			} else {
-				// console.log('Skipped...', fmtPxData(pxData));
-			}
+    // Start simple and only compute the leftmost pixel
+    // value
+    if (xValue % 4 === 0) {
+      // Will keep from writing to the same key
+      // a bunch of times
+      if (!computedPxDataHash[pxDataHashKey]) {
+        // This top one is what we'll end up sending
+        computedPxDataHash[fmtPxData(pxData)] = 700 - yValue;
+        // tempFrequencyBuffer.push(yValue);
+        // tempPxBuffer.push(compPx(canvData, currentPixel));
+      } else {
+        // console.log('Skipped...', fmtPxData(pxData));
+      }
     }
   }
 
   // Get the average accross the sampled
   // frequencies, in order to have a consistent frequency to play
-	
-	if(tempFrequencyBuffer.length >= 4) {
-		// console.log('tempFreq:', tempFrequencyBuffer);
-		// console.log('tempPx:', tempPxBuffer);
-		// console.log('computedPxHash', computedPxDataHash);			
-    freqToPlay = tempFrequencyBuffer.reduce((avgAcc, currFreq) => {
-      return avgAcc + currFreq;
-    }, 0) / tempFrequencyBuffer.length;
 
-    frequencyDataBuffer.push({
-      freqToPlay: 700 - freqToPlay,
-      scheduleAtTime,
-    });
-	}
+  // if (tempFrequencyBuffer.length >= 4) {
+  //   freqToPlay = tempFrequencyBuffer.reduce((avgAcc, currFreq) => {
+  //     return avgAcc + currFreq;
+  //   }, 0) / tempFrequencyBuffer.length;
 
-	Object.entries(computedPxDataHash).forEach(([ color, freq ]) => {
+  //   frequencyDataBuffer.push({
+  //     freqToPlay: 700 - freqToPlay,
+  //     scheduleAtTime,
+  //   });
+  // }
+
+  Object.entries(computedPxDataHash).forEach(([color, freq]) => {
     // If the color doesn't exists, don't but it in the buffer
-    if(sampleBufferHash[color]) {
-			sampleBufferHash[color].push(freq);
-		}
-	})
+    if (sampleBufferHash[color]) {
+      sampleBufferHash[color].push(freq);
+    }
+  })
 
-	tempFrequencyBuffer.splice(0, tempFrequencyBuffer.length); // Clears it out, just to be sure
+  tempFrequencyBuffer.splice(0, tempFrequencyBuffer.length); // Clears it out, just to be sure
 }
 
-const sendFreqDataToCanvas = () => {
-  // self.postMessage({
-  //   action: 'UPDATE_OSCFREQ',
-  //   payload: frequencyDataBuffer[0]
-  // })
-}
+// const sendFreqDataToCanvas = () => {
+//   // self.postMessage({
+//   //   action: 'UPDATE_OSCFREQ',
+//   //   payload: frequencyDataBuffer[0]
+//   // })
+// }
 
 const sendComputedFreqData = () => {
   // console.log(sampleBufferHash);
@@ -246,15 +238,15 @@ const computeFrequencyData = () => {
   // These functions grab data from the
   // global variables.
   computePaintedToFreq();
-	sendComputedFreqData();
-	
+  sendComputedFreqData();
 
-  if(frequencyDataBuffer.length > 0) {
-    sendFreqDataToCanvas();
-    frequencyDataBuffer.splice(0, 1);
-  } else {
-    // Send a mute signal
-  }
+
+  // if (frequencyDataBuffer.length > 0) {
+  //   sendFreqDataToCanvas();
+  //   frequencyDataBuffer.splice(0, 1);
+  // } else {
+  //   // Send a mute signal
+  // }
 
   if (pixelBuffer.length > 0) {
     // Remove data that has been sent
@@ -263,13 +255,13 @@ const computeFrequencyData = () => {
     // Do nothing
   }
 
-				// console.log('sampleBufferHash: ', sampleBufferHash);
+  // console.log('sampleBufferHash: ', sampleBufferHash);
   currentAudioClockTime += samplingFreq;
   self.setTimeout(computeFrequencyData, samplingFreq);
 }
 
 
-self.onmessage = function({ data }) {
+self.onmessage = function ({ data }) {
   /**
    * 3 options for action:
    *  1. INIT_WORKER
@@ -280,33 +272,31 @@ self.onmessage = function({ data }) {
    * which will funnel data back up to the UI layer;
    */
   const { action, payload } = data;
-  switch(action) {
+  switch (action) {
     case 'GET_CANVAS':
-        getCanvasData();
-        // self.setTimeout(getCanvasData, samplingFreq + samplingBufferLookahead)
+      getCanvasData();
       break;
     case 'RESP_CANVAS':
-        // Payload will be a Uint8Array buffer
-        pushSampledDataToBuffer(payload);
+      // Payload will be a Uint8Array buffer
+      pushSampledDataToBuffer(payload);
       break;
     case 'UPDATE_SAMPFREQ':
-      samplingFreq = ( 1 / payload.newSamplingFreq ) * 1000;
+      // Sets the sampling frequency to an
+      // interval that is short enough to produce a coherent
+      // result. Default is  (1 / 4410) * 1000 = .22 seconds
+      samplingFreq = (1 / payload.newSamplingFreq) * 1000;
       console.log('New Sampling Freq', samplingFreq);
       break;
     case 'INIT_WORKER':
-      // Want to initialize data upon creation of the
-      // worker
-      console.log("Initialized");
       canvasHeight = payload.canvasHeight;
       canvasWidth = payload.canvasWidth;
       samplingBufferLookahead = payload.samplingBufferLookahead;
       samplingSliceWidth = payload.samplingSliceWidth;
-      samplingFreq = ( 1 / payload.samplingFreq ) * 1000;
+      samplingFreq = (1 / payload.samplingFreq) * 1000;
       initialized = true;
       break;
     case 'START_WORKER':
-      console.log('Starting scheduling', initialized);
-      if(!initialized) {
+      if (!initialized) {
         throw new Error('Cannot start a scheduler which is not initialized');
       }
       // Start scheduling cycle
@@ -314,7 +304,7 @@ self.onmessage = function({ data }) {
       self.setTimeout(computeFrequencyData, samplingFreq);
       break;
     case 'STOP_WORKER':
-      if(!initialized) {
+      if (!initialized) {
         throw new Error('Cannot stop a non-existent scheduler');
       }
       // audioScheduer.stop();
