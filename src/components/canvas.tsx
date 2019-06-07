@@ -26,21 +26,11 @@ interface Props{
 }
 
 export default class Canvas extends Component<Props> {
-
+  audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
   state = {
-    mouseDown: false,
-    colorsWaveTypeMap: {
-      current: 'sine',
-      available: {
-        sine: 'aquamarine',
-        triangle: 'green',
-        square: 'purple',
-        sawtooth: 'red',
-      }
-    }
+    mouseDown: false
   }
-
-  samplingFreq = .5;
+  samplingFreq = .5; // the number of seconds to sample by
 
   colorWaveTypeMap = {
     current: {
@@ -52,76 +42,66 @@ export default class Canvas extends Component<Props> {
     }
   };
 
-  private initFreq = 1000;
   private ctx: any;
-  // I know this is messy, but I am testing
-  audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
 
-  firstX = 0;
-  firstY = 0;
-  lastX = 0;
-  lastY = 0;
-  // Public
-  public handleMouseDown = (e: MouseEvent) => {
+  // firstX = 0;
+  // firstY = 0;
+  // lastX = 0;
+  // lastY = 0;
+
+  // Event 
+  /** ~ Event Handlers ~ **/
+
+  handleColorChange = (newCurrent: any) => {
+    this.colorWaveTypeMap.current = newCurrent;
+  }
+
+  handleMouseDown = (e: MouseEvent) => {
     this.setState({ ...this.state, mouseDown: true });
     this.ctx.beginPath();
     this.ctx.moveTo(e.offsetX, e.offsetY);
     this.paint(e.offsetX, e.offsetY);
-    this.firstX = e.offsetX;
-    this.firstY = e.offsetY;
   }
   
-  public handleMouseUp = () => {
+  handleMouseUp = () => {
     this.setState({ ...this.state, mouseDown: false });
-    this.ctx.closePath();
-    // Path goes left to right
-    if (this.firstX < this.lastX) {
-      this.initFreq = 200;
-    } else {
-      this.initFreq = 700;
-    }
-    // this.addAudioNodeToMixer(this.initFreq);
+    this.ctx.closePath(); // Stops the paint
   }
 
-  public handleMouseMove = (e: MouseEvent) => {
+  handleMouseMove = (e: MouseEvent) => {
     if(this.state.mouseDown){
       this.paint(e.offsetX, e.offsetY);
-      this.lastX = e.offsetX;
-      this.lastY = e.offsetY;
     }
   }
+
+  /** ~ Utilities ~ **/
 
   rgba(rgbaObject: any) {
     const { r, g, b, a }: any = rgbaObject;
     return `rgba(${r}, ${g}, ${b}, ${a})`
   }
 
-  // Private
   private paint = (x: number, y: number) => {
     if(!this.ctx) return;
-    const { current }: any = this.colorWaveTypeMap;
 
+    const { current }: any = this.colorWaveTypeMap;
     this.ctx.lineTo(x, y);
     this.ctx.strokeStyle = this.rgba(current.rgba);
     this.ctx.lineWidth = 4;
     this.ctx.stroke();
   }
 
-  private handleColorChange = (newCurrent: any) => {
-    this.colorWaveTypeMap.current = newCurrent;
-    console.log(this.colorWaveTypeMap)
-  }
-
   private startAudioWorker = () => {
-    console.log("Starting Audio Scheduler Worker");
+    // Tells the web worker to poll
+    // the canvas for data and start
+    // scheduling bits to send to mixer
     this.audioSchedulerWorker.postMessage({
       action: 'START_WORKER',
       data: null
     })
-
   }
 
-  updateSamplingFrequency = (newSamplingFreq: number) => {
+  private updateSamplingFrequency = (newSamplingFreq: number) => {
     this.audioSchedulerWorker.postMessage({
       action: 'UPDATE_SAMPFREQ',
       payload: {
@@ -131,48 +111,32 @@ export default class Canvas extends Component<Props> {
   }
 
   private updateAudioFreq = (payload: any) => {
-    const { current } = this.state.colorsWaveTypeMap;
-    // Shim until state can by dynamic
-    const waves: any = {
-      sine: 'sine',
-      triangle: 'triangle',
-      square: 'square',
-      sawtooth: 'sawtooth'
-    };
-
+    // Payload is of the format:
+    // { 'color-fmt-string': newFreqValue, ... }
     this.props.pubFn('mixerEvent', { 
       action: 'UPDATE_OSCFRQ', 
       data: payload
     })
-    // this.props.pubFn(waves[current], { action: 'ADD_NODE', data: null })
   }
 
 
-  // Lifecylce
+  /** ~ Lifecycle methods ~ **/
+
   componentDidMount() {
-    let test = true;
+
     let canvasObj: any = document.getElementById(this.props.id);
     if(canvasObj) {
       canvasObj.width = store.canvas.width;
       canvasObj.height = store.canvas.height;
       this.ctx = canvasObj.getContext('2d');
       this.ctx.translate(0.5, 0.5); // For bit anti-aliasing
-
-      // So that way we have some sore of baseline for
-      // what to expect from the UI
-      // if(test){
-      //   this.ctx.fillStyle = 'aquamarine'
-      //   this.ctx.fillRect(0, 490, 20, 4);
-      // }
     }
-    
-    const pub = this.props.pubFn;
 
     this.audioSchedulerWorker.onmessage = (message: any) => {
-      // console.log('Got message from audio worker:', message);
+
       let { action, payload } = message.data;
       if(action === 'GET_CANVAS') {
-        // console.log("Sampling Frame: ", parseInt(payload.sliceStart), 0, 4, 500);
+
         let canvasData = this.ctx.getImageData(parseInt(payload.sliceStart), 0, 4, this.props.canvas.height).data;
         let audioCtxTime = this.props.audioContext.currentTime;
         let payloadObject = { 
@@ -187,10 +151,13 @@ export default class Canvas extends Component<Props> {
         // helps with keeping this transaction/handoff efficient
         this.audioSchedulerWorker
           .postMessage(payloadObject, [payloadObject.payload.buf]);
+
       } else if( action === 'UPDATE_OSCFRQ') {
-        // console.log('Updated freq to', payload.freqToPlay);
+
         this.updateAudioFreq(payload);
       }
+      // At this point, nothing to do
+      // the command given is not valid
     }
 
     /**
@@ -202,25 +169,21 @@ export default class Canvas extends Component<Props> {
       payload: {
         canvasWidth: this.props.canvas.width,
         canvasHeight: this.props.canvas.height,
-        samplingBufferLookahead: 32, // Lookahead buffer of pixels
-        samplingSliceWidth: 4, // 2 Pixels
-        samplingFreq: 441, // This will be the frequency of sampling
+        samplingBufferLookahead: 32, // Lookahead buffer of pixels -> not used at the moment
+        samplingSliceWidth: 4, // 1 Pixel, due to a pixel being composed of a 4x4 pixel area
+        samplingFreq: 441, // This will be the initial frequency of sampling the canvas
       }
     })
 
   }
 
-  // Otherwise canvas will never render
+  // Keeps component from re-rendering, otherwise canvas will never render
   // an accurate output
   shouldComponentUpdate(){
     return false;
   }
 
   public render({ id, canvas, colorWaveTypeMap }: Props) {
-    const { available }: {
-      available: {}
-    } = this.state.colorsWaveTypeMap;
-    
     return (
       <div
         style={{
@@ -274,8 +237,6 @@ export default class Canvas extends Component<Props> {
             onChange={(e: any) => {
               const val: number = parseFloat(e.target.value);
               this.samplingFreq = val;
-              // this.updateAudioFreq(this.samplingFreq * 1000);
-              console.log('New Samp', this.samplingFreq * 44100);
               this.updateSamplingFrequency(this.samplingFreq * 44100);
             }}
           />

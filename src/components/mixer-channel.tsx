@@ -20,6 +20,11 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
     volume: 0.2 // Default value
   }
 
+  /**
+   * Little wrapper to setState and trigger re-render
+   * @param key string value
+   * @param value any
+   */
   updateState(key: string, value: any) {
     this.setState({
       ...this.state,
@@ -50,7 +55,6 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
         id={id.toString()}
       >
         <h3>{name}</h3>
-        {/* <h2>{audioAttrs.volume}</h2> */}
         <input 
           // Values
           type="range"
@@ -62,7 +66,9 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
           onMouseDown={() => this.updateState('mouseDown', true)}
           onMouseUp={() => this.updateState('mouseDown', false)}
           onMouseMove={(ev: any) => {
-            if( this.state.mouseDown ) {
+            if(this.state.mouseDown) {
+              // Want to make sure the volume is a float
+              // before passing it up to the mixer
               let newVolume = parseFloat(ev.target.value);
               handleVolumeChange(channelName, newVolume);
               this.updateState('volume', newVolume);

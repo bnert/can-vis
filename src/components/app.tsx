@@ -10,18 +10,6 @@ if ((module as any).hot) {
     require("preact/debug");
 }
 
-
-let colors = {
-  current: 'sine',
-  available: {
-    sine: 'aquamarine',
-    traingle: 'green',
-    square: 'purple',
-    sawtooth: 'red',
-  }
-}
-
-
 // To get freq by value,
 // from the data sent back by the worker,
 // compare the keys of object against each
@@ -34,7 +22,7 @@ let colorWaveTypeMap = {
       g: 165,
       b: 219,
       a: 255
-    } // unique value: 386
+    }
   },
   triangle: {
     waveType: 'triangle',
@@ -43,7 +31,7 @@ let colorWaveTypeMap = {
       g: 165,
       b: 78,
       a: 255
-    } // u.v: 245
+    }
   },
   square: {
     waveType: 'square',
@@ -52,7 +40,7 @@ let colorWaveTypeMap = {
       g: 2,
       b: 2,
       a: 255
-    } // u.v: 223
+    }
   },
   sawtooth: {
     waveType: 'sawtooth',
@@ -61,7 +49,7 @@ let colorWaveTypeMap = {
       g: 75,
       b: 138,
       a: 255
-    } // u.v: 363
+    }
   }
 }
 
@@ -78,20 +66,6 @@ export default class App extends Component {
     canvasWidth: number = 1080;
     canvasHeight: number = 720;
 
-    // General state object
-    state = {
-      audioNodes: Object.entries(colors.available)
-        .map(([ waveType, color ], i: number) => {
-          return {
-            id: `ch-${i}`,
-            data: {
-              color,
-              waveType
-            }
-          }
-      })
-    }
-
     /** 
      * One thing that needs to be made available to both
      * the canvas and the audio worker, is the audio context
@@ -99,45 +73,15 @@ export default class App extends Component {
     audioCtx: AudioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     /** 
-     * Instantiate a new pubsub for updates 
+     * Instantiate a new pubsub buss for updates 
      * across components
     */
     ps = pubsub();
 
-    /**   
-     * For making sure each child node is available
-     * before pusing any data to each of them
-     */
-    allNodesStatus: Array<any> = [];
-
-    pushReadyNode = (nodeData: any) => {
-      this.allNodesStatus.push(nodeData);
-    }
-
-    checkAllNodesMounted = () => {
-      if(this.allNodesStatus.length === this.state.audioNodes.length) {
-        return true;
-      }
-      return false;
-    }
-
-    pollChildMounted = ({ childId, ready }: { childId: string, ready: boolean }) => {
-      this.pushReadyNode({ childId, ready });
-      let allNodesStat = this.checkAllNodesMounted()
-      
-      allNodesStat ?
-        console.log("All nodes mounted") :
-        console.log("All nodes not mounted");
-    } 
-
-    /************************************* */
-    componentDidMount() {
-
-    }
-
     public render() {
       return (
         <div
+          className={`app app-container`}
           style={{
             display: 'flex',
             flexDirection: 'row'
