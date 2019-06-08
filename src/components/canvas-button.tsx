@@ -10,7 +10,7 @@ interface ISelectButtonProps {
   subFn: any;
 }
 
-export default class SelectButton extends Component<ISelectButtonProps> {
+export default class CanvasButton extends Component<ISelectButtonProps> {
   state = {
     active: this.props.active
   }
@@ -32,9 +32,9 @@ export default class SelectButton extends Component<ISelectButtonProps> {
       id={`canvas-button__${props.waveType}`}
       className={
         (state.active ? 
-        `${this.cName}--active` : 
-        `${this.cName}--inactive`) +
-        ` canvas-button canvas-button__${props.waveType}`
+        `led-btn--active` : 
+        `led-btn--inactive`) +
+        ` led-btn canvas-button canvas-button__${props.waveType}`
       }
 
       style={{

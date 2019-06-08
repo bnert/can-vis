@@ -46,27 +46,27 @@ export default class AudioMixer extends Component<any, any> {
   
   // We don't want this to be in the typical 'state'
   // due to we don't want it to be mutated after it's assigned
-  audioCtx: any; 
+  public audioCtx: any; 
 
-  channelDefaults: any = {
+  public channelDefaults: any = {
     volRangeStep: 0.01
   }
 
   // Transfer to inherit from parent component?
-  sinKey = '0-160-210';
-  triKey = '0-160-70';
-  squKey = '210-0-0';
-  sawKey = '240-70-130';
+  public sinKey = '0-160-210';
+  public triKey = '0-160-70';
+  public squKey = '210-0-0';
+  public sawKey = '240-70-130';
 
-  channels: any = {
+  public channels: any = {
     [this.sinKey]: channelFactory(0, 'sine'),
     [this.triKey]: channelFactory(1, 'triangle'),
     [this.squKey]: channelFactory(2, 'square'),
     [this.sawKey]: channelFactory(3, 'sawtooth'),
   };
 
-  addNodeToChannel(channel: string, initFreq: number) {
-    let ch = this.channels[channel];
+  public addNodeToChannel(channel: string, initFreq: number) {
+    const ch = this.channels[channel];
     console.log('Adding:', ch.name);
     ch.node = AudioNodeInstance(
       defaultAudioNodeSettings(
@@ -82,24 +82,24 @@ export default class AudioMixer extends Component<any, any> {
     //   null; // Second option suppressed mute
   }
 
-  muteChannelNodes = (channel: string) => {
+  public muteChannelNodes = (channel: string) => {
     // Audio attrs is for reference
     this.channels[channel].audioAttrs.muted = true;
     this.channels[channel].node.mute();
   }
 
-  unmuteChannelNodes = (channel: string) => {
+  public unmuteChannelNodes = (channel: string) => {
     // Audio attrs is for reference
     this.channels[channel].audioAttrs.muted = false;
     this.channels[channel].node.unmute();
   }
 
-  updateChannelVol = (channel: string, newVolume: number) => {
+  public updateChannelVol = (channel: string, newVolume: number) => {
     this.channels[channel].audioAttrs.volume = newVolume;
     this.channels[channel].node.updateVolume(newVolume, this.audioCtx.currentTime);
   }
 
-  updateNodeFreq = (freqData: any) => {
+  public updateNodeFreq = (freqData: any) => {
     // Grab the sent color from each frequency and funnel into
     // updating the oscillator node
     Object.entries(freqData).forEach(([ color, freq ]) => {
@@ -112,7 +112,7 @@ export default class AudioMixer extends Component<any, any> {
     })
   }
 
-  startOscNodes = () => {
+  public startOscNodes = () => {
     // this.decideAction({
     //   action: 'ADD_OSC',
     //   data: {
@@ -160,7 +160,7 @@ export default class AudioMixer extends Component<any, any> {
 
   // This fuction is mainly implemented as a
   // 'message broker' for incoming event messages
-  decideAction = (ev: any) => {
+  public decideAction = (ev: any) => {
     const { action, data }: 
       { 
         action: string, 
@@ -185,7 +185,7 @@ export default class AudioMixer extends Component<any, any> {
 
   }
 
-  componentDidMount() {
+  public componentDidMount() {
     const { subFn, audioContext }: any = this.props;
     this.audioCtx = audioContext;
     console.log('Audiocontext State:', this.audioCtx.state);
@@ -230,7 +230,7 @@ export default class AudioMixer extends Component<any, any> {
     });
   }
 
-  render() {
+  public render() {
     return (
       <div
         className={`site-mixer`}

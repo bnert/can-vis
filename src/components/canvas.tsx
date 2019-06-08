@@ -1,8 +1,8 @@
 import { Component, h } from "preact";
 
-import SelectButton from './canvas-button';
+import CanvasButton from './canvas-button';
 
-let store = {
+const store = {
   canvas: {
     height: 720,
     width: 1080,
@@ -27,13 +27,13 @@ interface Props{
 }
 
 export default class Canvas extends Component<Props> {
-  audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
-  state = {
+  public audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
+  public state = {
     mouseDown: false
   }
-  samplingFreq = .5; // the number of seconds to sample by
+  public samplingFreq = .5; // the number of seconds to sample by
 
-  colorWaveTypeMap = {
+  public colorWaveTypeMap = {
     current: {
       waveType: this.props.colorWaveTypeMap.sine.waveType,
       rgba: this.props.colorWaveTypeMap.sine.rgba
@@ -53,23 +53,23 @@ export default class Canvas extends Component<Props> {
   // Event 
   /** ~ Event Handlers ~ **/
 
-  handleColorChange = (newCurrent: any) => {
+  public handleColorChange = (newCurrent: any) => {
     this.colorWaveTypeMap.current = newCurrent;
   }
 
-  handleMouseDown = (e: MouseEvent) => {
+  public handleMouseDown = (e: MouseEvent) => {
     this.setState({ ...this.state, mouseDown: true });
     this.ctx.beginPath();
     this.ctx.moveTo(e.offsetX, e.offsetY);
     this.paint(e.offsetX, e.offsetY);
   }
   
-  handleMouseUp = () => {
+  public handleMouseUp = () => {
     this.setState({ ...this.state, mouseDown: false });
     this.ctx.closePath(); // Stops the paint
   }
 
-  handleMouseMove = (e: MouseEvent) => {
+  public handleMouseMove = (e: MouseEvent) => {
     if(this.state.mouseDown){
       this.paint(e.offsetX, e.offsetY);
     }
@@ -82,8 +82,8 @@ export default class Canvas extends Component<Props> {
     return `rgba(${r}, ${g}, ${b}, ${a})`
   }
 
-  private paint = (x: number, y: number) => {
-    if(!this.ctx) return;
+  paint = (x: number, y: number) => {
+    if(!this.ctx) { return; }
 
     const { current }: any = this.colorWaveTypeMap;
     this.ctx.lineTo(x, y);
@@ -92,7 +92,7 @@ export default class Canvas extends Component<Props> {
     this.ctx.stroke();
   }
 
-  private startAudioWorker = () => {
+  startAudioWorker = () => {
     // Tells the web worker to poll
     // the canvas for data and start
     // scheduling bits to send to mixer
@@ -102,7 +102,7 @@ export default class Canvas extends Component<Props> {
     })
   }
 
-  private updateSamplingFrequency = (newSamplingFreq: number) => {
+  updateSamplingFrequency = (newSamplingFreq: number) => {
     this.audioSchedulerWorker.postMessage({
       action: 'UPDATE_SAMPFREQ',
       payload: {
@@ -111,7 +111,7 @@ export default class Canvas extends Component<Props> {
     })
   }
 
-  private updateAudioFreq = (payload: any) => {
+  updateAudioFreq = (payload: any) => {
     // Payload is of the format:
     // { 'color-fmt-string': newFreqValue, ... }
     this.props.pubFn('mixerEvent', { 
@@ -120,12 +120,11 @@ export default class Canvas extends Component<Props> {
     })
   }
 
-
   /** ~ Lifecycle methods ~ **/
 
-  componentDidMount() {
+  public componentDidMount() {
 
-    let canvasObj: any = document.getElementById(this.props.id);
+    const canvasObj: any = document.getElementById(this.props.id);
     if(canvasObj) {
       canvasObj.width = store.canvas.width;
       canvasObj.height = store.canvas.height;
@@ -135,12 +134,12 @@ export default class Canvas extends Component<Props> {
 
     this.audioSchedulerWorker.onmessage = (message: any) => {
 
-      let { action, payload } = message.data;
+      const { action, payload } = message.data;
       if(action === 'GET_CANVAS') {
 
-        let canvasData = this.ctx.getImageData(parseInt(payload.sliceStart), 0, 4, this.props.canvas.height).data;
-        let audioCtxTime = this.props.audioContext.currentTime;
-        let payloadObject = { 
+        const canvasData = this.ctx.getImageData(parseInt(payload.sliceStart), 0, 4, this.props.canvas.height).data;
+        const audioCtxTime = this.props.audioContext.currentTime;
+        const payloadObject = { 
           action: 'RESP_CANVAS',
           payload: {
             buf: canvasData.buffer,
@@ -180,23 +179,20 @@ export default class Canvas extends Component<Props> {
 
   // Keeps component from re-rendering, otherwise canvas will never render
   // an accurate output
-  shouldComponentUpdate(){
+  public shouldComponentUpdate(){
     return false;
   }
 
   public render({ id, canvas, colorWaveTypeMap }: Props) {
     return (
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row'
-        }}
+        className={`app-canvas`}
       >
         <div
           className={`canvas-button__container`}
         >
           {Object.values(colorWaveTypeMap).map((el: any, index: number) => {
-            return <SelectButton
+            return <CanvasButton
               value={el.waveType}
               waveType={el.waveType}
               bgRgba={el.rgba}
@@ -208,10 +204,9 @@ export default class Canvas extends Component<Props> {
           })}
         </div>
         <canvas
-          className={`app-canvas`}
+          className={`app-canvas__canvas`}
           id={id}
           style={{
-            background: 'rgb(91, 91, 91)',
             height: canvas.height,
             width: canvas.width
           }}
@@ -220,17 +215,15 @@ export default class Canvas extends Component<Props> {
           onMouseMove={this.handleMouseMove}
         ></canvas>
         <div
+          className={`canvas-controls`}
           style={{
             display: 'grid',
             gridTemplateRows: '75% 25%'
           }}
         >
-          <input 
-            style={{
-              height: '90%',
-              WebkitAppearance: 'slider-vertical'
-            }}
-            orient="vertical" // Only for Firefox
+          <input
+            className={`canvas-controls__tempo-slider`}
+            orient="vertical" // Only for Firefox, gives error
             type="range" 
             min="0" 
             max="1" 
@@ -242,13 +235,25 @@ export default class Canvas extends Component<Props> {
               this.updateSamplingFrequency(this.samplingFreq * 44100);
             }}
           />
-            <div>
-              <button onClick={() => {
+          <div 
+            className={`canvas-controls__play-pause`}
+          >
+            <button 
+              className={`play-pause__btn play-pause__play`}
+              onClick={() => {
                 this.props.pubFn('mixerEvent', { action: 'INIT_OSC' });
                 this.startAudioWorker();
-              }}>Play</button>
-              <button onClick={() => {console.log('Cancel');}}>Pause</button>
-            </div>
+              }}
+            >
+              Play
+            </button>
+            <button 
+              className={`play-pause__btn play-pause__play`}
+              onClick={() => {console.log('Cancel');}}
+            >
+              Pause
+            </button>
+          </div>
         </div>
       </div>
     )

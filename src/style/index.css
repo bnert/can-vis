@@ -24,9 +24,37 @@ body {
     height: 100%;
 }
 
+/* General Purpose Styles */
+
+.led-btn {
+  border: none;
+  border-radius: 0.4rem;
+  display: block;
+  outline: none;
+  transition: 0.0001s; /* Makes it slightly more realistic*/
+}
+
+.led-btn--active {
+  opacity: 1;
+}
+
+.led-btn--inactive {
+  opacity: 0.6;
+}
+
+/* Mixer Components */
+
+
+/* Canvas Component / Sub Components */
 .app-canvas {
-    border-radius: 0.4rem;
-    box-shadow: inset 0px 3px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: row;
+}
+
+.app-canvas__canvas {
+  background: rgb(91, 91, 91);
+  border-radius: 0.4rem;
+  box-shadow: inset 0px 3px 4px rgba(0, 0, 0, 0.2);
 }
 
 .canvas-button__container {
@@ -37,20 +65,32 @@ body {
 }
 
 .canvas-button {
-    border: none;
-    border-radius: 0.4rem;
-    display: block;
-    margin: 0 1.2rem;
-    width: 10rem;
-    height: 10rem;
-    outline: none;
-    transition: 0.0001s; /* Makes it slightly more realistic*/
+    margin: 0 1rem;
+    width: 11rem;
+    height: 11rem;
 }
 
-.canvas-button--active {
-    opacity: 1;
+.canvas-controls {
+  display: grid;
+  grid-template-rows: 3fr 1fr;
+  margin: 0 1rem;
+  width: 8rem;
 }
 
-.canvas-button--inactive {
-    opacity: 0.6;
+.canvas-controls__tempo-slider {
+  display: inline-block;
+  height: 90%;
+  -webkit-appearance: slider-vertical;
+}
+
+.canvas-controls__play-pause {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.play-pause__btn {
+  height: 45%;
+  width: 100%;
 }
