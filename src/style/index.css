@@ -58,6 +58,44 @@ body {
   width: 100%;
 }
 
+/* CSS Tricks article helped with the styling:
+    https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/
+*/
+.mixer-channel__slider {
+  -webkit-appearance: none;
+  background: rgb(91, 91, 91);
+  border-radius: .4rem;
+  border: none;
+  box-shadow: inset 0px 3px 4px rgba(0, 0, 0, 0.2);
+  height: 1rem;
+  outline: none;
+  width: 95%;
+}
+
+.mixer-channel__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 6rem;
+  width: 2rem;
+  outline: none;
+  background: url('../assets/svg/vertical-slider.svg') no-repeat;
+  background-size: cover;
+  box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
+  cursor: col-resize;
+}
+
+.mixer-channel__slider::-moz-range-thumb {
+  height: 6rem;
+  width: 2rem;
+  outline: none;
+  border: none;
+  background: url('../assets/svg/vertical-slider.svg') no-repeat;
+  background-size: cover;
+  box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
+  cursor: col-resize;
+}
+
+
+
 .mixer-channel__mute-btn {
   display: inline-block;
   height: 11rem;

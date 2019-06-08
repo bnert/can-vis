@@ -27,7 +27,6 @@ export default class CanvasButton extends Component<ISelectButtonProps> {
 
   render(props: ISelectButtonProps, state: any) {
     const { r, g, b, a }: any = props.bgRgba;
-    // const { active }: any = props.active;
     return <button
       id={`canvas-button__${props.waveType}`}
       className={

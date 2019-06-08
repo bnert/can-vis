@@ -1,4 +1,5 @@
-import { resolve } from "path";
+import { resolve } from 'path';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 export default function(config, env, helpers) {
     // Switch css-loader for typings-for-css-modules-loader, which is a wrapper
@@ -19,6 +20,16 @@ export default function(config, env, helpers) {
         process.cwd(),
         "src",
         "index"
+    );
+
+    config.plugins.push(
+      new CopyWebpackPlugin([
+        { 
+          context: `${__dirname}/src/assets`, 
+          from: `svg/*`,
+          to: `assets/svg/` 
+        }
+      ])
     );
 
     return config;
