@@ -102,6 +102,15 @@ export default class Canvas extends Component<Props> {
     })
   }
 
+  stopAudioWorker = () => {
+    // Need to send the signal to
+    // cancel current scheduled timeouts
+    this.audioSchedulerWorker.postMessage({
+      action: 'STOP_WORKER',
+      data: null
+    })
+  }
+
   updateSamplingFrequency = (newSamplingFreq: number) => {
     this.audioSchedulerWorker.postMessage({
       action: 'UPDATE_SAMPFREQ',
@@ -216,10 +225,10 @@ export default class Canvas extends Component<Props> {
         ></canvas>
         <div
           className={`canvas-controls`}
-          style={{
-            display: 'grid',
-            gridTemplateRows: '75% 25%'
-          }}
+          // style={{
+          //   display: 'grid',
+          //   gridTemplateRows: '75% 25%'
+          // }}
         >
           <input
             className={`canvas-controls__tempo-slider`}
@@ -244,15 +253,15 @@ export default class Canvas extends Component<Props> {
                 this.props.pubFn('mixerEvent', { action: 'INIT_OSC' });
                 this.startAudioWorker();
               }}
-            >
-              Play
-            </button>
+            ></button>
             <button 
-              className={`play-pause__btn play-pause__play`}
-              onClick={() => {console.log('Cancel');}}
-            >
-              Pause
-            </button>
+              className={`play-pause__btn play-pause__stop`}
+              onClick={() => {
+                // Send event to mixer to stop the audio context
+                this.props.pubFn('mixerEvent', { action: 'CTX_SUSPEND' });
+                this.stopAudioWorker();
+              }}
+            ></button>
           </div>
         </div>
       </div>

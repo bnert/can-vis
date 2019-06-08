@@ -122,7 +122,7 @@ export default class AudioMixer extends Component<any, any> {
       this.audioCtx.resume();
     }
     Object.values(this.channels).forEach(({ node, audioAttrs }: any) => {
-      if(node) {
+      if(node && !node.started()) {
         node.start();
         audioAttrs.muted ?
           node.mute() :
@@ -149,6 +149,9 @@ export default class AudioMixer extends Component<any, any> {
           break;
         case 'UPDATE_OSCFRQ':
           this.updateNodeFreq(data);
+          break;
+        case 'CTX_SUSPEND':
+            this.audioCtx.suspend();
           break;
         default:
           console.log(`Mixer: ${action} action not specified`);

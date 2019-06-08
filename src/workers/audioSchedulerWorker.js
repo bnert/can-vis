@@ -43,6 +43,11 @@ let sampleBufferHash = {
   [sawKey]: [] // saw purple
 }
 
+// Only need an array, due to the fact
+// we need to cancel all timeouts at a given
+// point in time
+let timeOuts = new Array(10); // arbitrary 10
+
 /**
  * This is meant to poll the canvas for its
  * data. The reason we do this here, is so there
@@ -63,7 +68,7 @@ const getCanvasData = () => {
     frequencyDataBuffer = [];
     pixelBuffer = [];
   }
-  self.setTimeout(getCanvasData, samplingFreq);
+  timeOuts[0] = self.setTimeout(getCanvasData, samplingFreq);
 }
 
 /**
@@ -257,7 +262,7 @@ const computeFrequencyData = () => {
 
   // console.log('sampleBufferHash: ', sampleBufferHash);
   currentAudioClockTime += samplingFreq;
-  self.setTimeout(computeFrequencyData, samplingFreq);
+  timeOuts[1] = self.setTimeout(computeFrequencyData, samplingFreq);
 }
 
 
@@ -301,14 +306,26 @@ self.onmessage = function ({ data }) {
       }
       // Start scheduling cycle
       getCanvasData()
+      initialized = true;
       self.setTimeout(computeFrequencyData, samplingFreq);
       break;
     case 'STOP_WORKER':
       if (!initialized) {
         throw new Error('Cannot stop a non-existent scheduler');
       }
-      // audioScheduer.stop();
-      initialized = false;
+      timeOuts.forEach(timeoutId => {
+        if(timeoutId) {
+          self.clearTimeout(timeoutId);
+        }
+      })
+      // Reset the buffers
+      sampleBufferHash = {
+        [sinKey]: [], // sine blue
+        [triKey]: [], // triangle green
+        [squKey]: [], // square red
+        [sawKey]: [] // saw purple
+      }
+      // initialized = false;
       break;
     default:
       console.log('Invalid message:', data);

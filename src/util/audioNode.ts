@@ -29,6 +29,7 @@ export const AudioNodeInstance = (
   // Oscillator specific config
   let osc = audioCtx.createOscillator();
   let currentFreq = currFreq;
+  let startedStatus = false;
   osc.type = waveType || 'sine';
   osc.frequency.setValueAtTime(currentFreq, audioCtx.currentTime);
 
@@ -48,7 +49,12 @@ export const AudioNodeInstance = (
   }
 
   const start = () => {
+    startedStatus = true;
     osc.start();
+  }
+
+  const started = () => {
+    return startedStatus;
   }
 
   const mute = () => {
@@ -70,6 +76,7 @@ export const AudioNodeInstance = (
   return {
     oscInst,
     start,
+    started,
     mute,
     unmute,
     updateFreq,
