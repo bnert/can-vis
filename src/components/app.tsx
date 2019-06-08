@@ -70,7 +70,7 @@ export default class App extends Component {
      * One thing that needs to be made available to both
      * the canvas and the audio worker, is the audio context
      */
-    audioCtx: AudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx: AudioContext | any = new (window.AudioContext || window.webkitAudioContext)();
 
     /** 
      * Instantiate a new pubsub buss for updates 

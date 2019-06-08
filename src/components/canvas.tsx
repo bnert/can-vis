@@ -33,11 +33,12 @@ export default class Canvas extends Component<Props> {
   }
   public samplingFreq = .5; // the number of seconds to sample by
 
+  // Used to set the color needed to paint to the canvas
   public colorWaveTypeMap = {
     current: {
       waveType: this.props.colorWaveTypeMap.sine.waveType,
       rgba: this.props.colorWaveTypeMap.sine.rgba
-    }, // Corresponds to 
+    }, 
     available: {
       ...this.props.colorWaveTypeMap
     }
@@ -45,12 +46,6 @@ export default class Canvas extends Component<Props> {
 
   private ctx: any;
 
-  // firstX = 0;
-  // firstY = 0;
-  // lastX = 0;
-  // lastY = 0;
-
-  // Event 
   /** ~ Event Handlers ~ **/
 
   public handleColorChange = (newCurrent: any) => {
