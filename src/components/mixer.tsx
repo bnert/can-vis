@@ -49,7 +49,13 @@ export default class AudioMixer extends Component<any, any> {
   public audioCtx: any; 
 
   public channelDefaults: any = {
-    volRangeStep: 0.01
+    volRangeStep: 0.01,
+    bgRgba: {
+      r: 255,
+      g: 161,
+      b: 68,
+      a: 1
+    }
   }
 
   // Transfer to inherit from parent component?
@@ -75,11 +81,6 @@ export default class AudioMixer extends Component<any, any> {
         initFreq
       )
     );
-
-    // ch.node.start();
-    // ch.audioAttrs.muted ?
-    //   ch.node.mute():
-    //   null; // Second option suppressed mute
   }
 
   public muteChannelNodes = (channel: string) => {
@@ -113,37 +114,9 @@ export default class AudioMixer extends Component<any, any> {
   }
 
   public startOscNodes = () => {
-    // this.decideAction({
-    //   action: 'ADD_OSC',
-    //   data: {
-    //     channel: this.sinKey,
-    //     initFreq: 200
-    //   }
-    // });
-
-    // this.decideAction({
-    //   action: 'ADD_OSC',
-    //   data: {
-    //     channel: this.triKey,
-    //     initFreq: 200
-    //   }
-    // });
-
-    // this.decideAction({
-    //   action: 'ADD_OSC',
-    //   data: {
-    //     channel: this.squKey,
-    //     initFreq: 200
-    //   }
-    // });
-
-    // this.decideAction({
-    //   action: 'ADD_OSC',
-    //   data: {
-    //     channel: this.sawKey,
-    //     initFreq: 200
-    //   }
-    // });
+    // Chrome by default suspends auto addded
+    // audio context nodes, so we resume
+    // once we get input from the user
     if (this.audioCtx.state === 'suspended') {
       console.log('Resuming...');
       this.audioCtx.resume();
@@ -233,7 +206,7 @@ export default class AudioMixer extends Component<any, any> {
   public render() {
     return (
       <div
-        className={`site-mixer`}
+        className={`app-mixer`}
         style={{
           alignItems: 'center',
           display: 'grid',

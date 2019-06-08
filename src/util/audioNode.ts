@@ -36,7 +36,7 @@ export const AudioNodeInstance = (
   let gainNode = audioCtx.createGain();
   osc.connect(gainNode); // Funnesl oscillator output to the gainNode output
   gainNode.connect(audioCtx.destination);
-  gainNode.gain.setValueAtTime(maxVolume, audioCtx.currentTime);
+  gainNode.gain.setValueAtTime(maxVolume * .2, audioCtx.currentTime);
 
   // Modifiers
   // This'll be used to "smooth" transition between values

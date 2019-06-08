@@ -89,6 +89,7 @@ export default class App extends Component {
         >
           <Mixer 
             audioContext={this.audioCtx}
+            colorWaveTypeMap={colorWaveTypeMap}
             subFn={this.ps.sub}
           />
           <Canvas 

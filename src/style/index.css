@@ -29,7 +29,6 @@ body {
 .led-btn {
   border: none;
   border-radius: 0.4rem;
-  display: block;
   outline: none;
   transition: 0.0001s; /* Makes it slightly more realistic*/
 }
@@ -44,6 +43,27 @@ body {
 
 /* Mixer Components */
 
+.app-mixer {
+  display: grid;
+  align-items: center;
+  grid-template-rows: repeat(4, 1fr);
+  width: 12rem;
+}
+
+.app-mixer__channel {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 9fr 1fr;
+  height: 100%;
+  width: 100%;
+}
+
+.mixer-channel__mute-btn {
+  display: inline-block;
+  height: 11rem;
+  width: 1.4rem;
+  margin: 0px;
+}
 
 /* Canvas Component / Sub Components */
 .app-canvas {
@@ -65,9 +85,10 @@ body {
 }
 
 .canvas-button {
-    margin: 0 1rem;
-    width: 11rem;
-    height: 11rem;
+  display: block;
+  margin: 0 .3rem;
+  width: 11rem;
+  height: 11rem;
 }
 
 .canvas-controls {
