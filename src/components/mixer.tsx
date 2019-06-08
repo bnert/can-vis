@@ -76,10 +76,10 @@ export default class AudioMixer extends Component<any, any> {
       )
     );
 
-    ch.node.start();
-    ch.audioAttrs.muted ?
-      ch.node.mute():
-      null; // Second option suppressed mute
+    // ch.node.start();
+    // ch.audioAttrs.muted ?
+    //   ch.node.mute():
+    //   null; // Second option suppressed mute
   }
 
   muteChannelNodes = (channel: string) => {
@@ -105,8 +105,55 @@ export default class AudioMixer extends Component<any, any> {
     Object.entries(freqData).forEach(([ color, freq ]) => {
       if(this.channels[color].node){
         if(freq && typeof freq === 'number'){
+
           this.channels[color].node.updateFreq(freq, this.audioCtx.currentTime);
         }
+      }
+    })
+  }
+
+  startOscNodes = () => {
+    // this.decideAction({
+    //   action: 'ADD_OSC',
+    //   data: {
+    //     channel: this.sinKey,
+    //     initFreq: 200
+    //   }
+    // });
+
+    // this.decideAction({
+    //   action: 'ADD_OSC',
+    //   data: {
+    //     channel: this.triKey,
+    //     initFreq: 200
+    //   }
+    // });
+
+    // this.decideAction({
+    //   action: 'ADD_OSC',
+    //   data: {
+    //     channel: this.squKey,
+    //     initFreq: 200
+    //   }
+    // });
+
+    // this.decideAction({
+    //   action: 'ADD_OSC',
+    //   data: {
+    //     channel: this.sawKey,
+    //     initFreq: 200
+    //   }
+    // });
+    if (this.audioCtx.state === 'suspended') {
+      console.log('Resuming...');
+      this.audioCtx.resume();
+    }
+    Object.values(this.channels).forEach(({ node, audioAttrs }: any) => {
+      if(node) {
+        node.start();
+        audioAttrs.muted ?
+          node.mute() :
+          null; // Want to keep it playing
       }
     })
   }
@@ -120,6 +167,9 @@ export default class AudioMixer extends Component<any, any> {
         data: any
       } = ev;
       switch(action) {
+        case 'INIT_OSC':
+          this.startOscNodes();
+          break;
         case 'ADD_OSC':
           // Duck type as a backup
           this.addNodeToChannel(data.channel || 'sine', data.initFreq || 440);
@@ -138,6 +188,7 @@ export default class AudioMixer extends Component<any, any> {
   componentDidMount() {
     const { subFn, audioContext }: any = this.props;
     this.audioCtx = audioContext;
+    console.log('Audiocontext State:', this.audioCtx.state);
 
     this.decideAction({
       action: 'ADD_OSC',

@@ -243,7 +243,10 @@ export default class Canvas extends Component<Props> {
             }}
           />
             <div>
-              <button onClick={this.startAudioWorker}>Play</button>
+              <button onClick={() => {
+                this.props.pubFn('mixerEvent', { action: 'INIT_OSC' });
+                this.startAudioWorker();
+              }}>Play</button>
               <button onClick={() => {console.log('Cancel');}}>Pause</button>
             </div>
         </div>
