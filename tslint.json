@@ -7,7 +7,7 @@
         "tslint-config-prettier"
     ],
     "rules": {
-        "interface-name": [true, "never-prefix"],
+        "interface-name": [true, "always-prefix"],
         "object-literal-sort-keys": false,
         "no-empty-interface": false,
         "no-submodule-imports": false,

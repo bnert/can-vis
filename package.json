@@ -7,10 +7,11 @@
     "start": "per-env",
     "start:production": "npm run -s serve",
     "start:development": "npm run -s dev",
-    "build": "preact build",
+    "build:ssr": "preact build",
+    "build:client": "preact build --no-prerender",
     "serve": "preact build && preact serve",
     "dev": "preact watch",
-    "lint": "tslint --project src",
+    "lint": "tslint --project .",
     "test": "jest ./tests",
     "precommit": "lint-staged"
   },
@@ -31,7 +32,7 @@
     "build/*"
   ],
   "devDependencies": {
-    "@types/jest": "^23.3.10",
+    "@types/jest": "^24.0.13",
     "@types/webpack-env": "^1.13.9",
     "copy-webpack-plugin": "^5.0.3",
     "css-loader": "^1.0.1",
@@ -56,7 +57,8 @@
   "dependencies": {
     "preact": "^8.3.1",
     "preact-compat": "^3.18.4",
-    "preact-router": "^2.6.1"
+    "preact-router": "^2.6.1",
+    "querystringify": "^2.1.1"
   },
   "peerDependencies": {
     "prettier": ">1.0.0",
