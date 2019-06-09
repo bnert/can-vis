@@ -16,8 +16,8 @@ interface IMixerChannelProps {
 }
 
 export default class MixerChannel extends Component<IMixerChannelProps> {
-  maxNumOfNodes = 4;
-  state = {
+  public maxNumOfNodes = 4;
+  public state = {
     unmuted: true, // Used for re-render upon prop change
     mouseDown: false, // For use with dragging the slider
     volume: 0.2 // Default value
@@ -25,17 +25,18 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
 
   /**
    * Little wrapper to setState and trigger re-render
-   * @param key string value
-   * @param value any
+   * @param {string} key is the value of key in state
+   * @param {any} value value can be what you want to update
+   * @returns {void}
    */
-  updateState(key: string, value: any) {
+  public updateState(key: string, value: any) {
     this.setState({
       ...this.state,
       [key]: value
     });
   }
 
-  componentDidMount() {
+  public componentDidMount() {
     this.setState({
       ...this.state,
       volume: this.props.audioAttrs.volume,
@@ -43,7 +44,7 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
     });
   }
 
-  render(props: IMixerChannelProps) {
+  public render(props: IMixerChannelProps) {
     const {
       id,
       channelName,
@@ -72,13 +73,14 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
           onMouseDown={() => this.updateState('mouseDown', true)}
           onMouseUp={() => this.updateState('mouseDown', false)}
           onMouseMove={(ev: any) => {
-            if(this.state.mouseDown) {
-              // Want to make sure the volume is a float
-              // before passing it up to the mixer
-              let newVolume = parseFloat(ev.target.value);
-              handleVolumeChange(channelName, newVolume);
-              this.updateState('volume', newVolume);
+            if(!this.state.mouseDown) {
+              return;
             }
+            // Want to make sure the volume is a float
+            // before passing it up to the mixer
+            const newVolume = parseFloat(ev.target.value);
+            handleVolumeChange(channelName, newVolume);
+            this.updateState('volume', newVolume);
           }}
         />
         <button
@@ -104,7 +106,7 @@ export default class MixerChannel extends Component<IMixerChannelProps> {
             // Used for re-render
             this.updateState('unmuted', !this.state.unmuted);
           }}
-        ></button>
+        />
       </div>
     )
   }

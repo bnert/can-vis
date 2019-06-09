@@ -1,7 +1,5 @@
 // Types
-interface IPubSubChannelFn {
-  (payload: any): any;
-}
+type PubSubChannelFn = (payload: any) => any;
 
 interface IPubSubPayload {
   action: string;
@@ -9,7 +7,7 @@ interface IPubSubPayload {
 }
 
 interface IPubSubChannel {
-  [channelName: string]: IPubSubChannelFn[];
+  [channelName: string]: PubSubChannelFn[];
 }
 
 interface IPubSub {
@@ -19,18 +17,18 @@ interface IPubSub {
 interface IPubSubReturn {
   chs(): string[];
   pub(channel: string, payload: any): void;
-  sub(channel: string, pubFn: IPubSubChannelFn): void;
+  sub(channel: string, pubFn: PubSubChannelFn): void;
 }
 
 
 /**
  * Simple Pub/Sub bus for state and event changes.
- * @param init
+ * @param {object} init -> init object with a set of channels
  * 
  * @return {object} => Contains functions to interact with channels
  */
 function pubsub(init?: IPubSub): IPubSubReturn {
-  let channels: any = init || {};
+  const channels: any = init || {};
 
   // Lists channels
   function chs() {
@@ -44,13 +42,13 @@ function pubsub(init?: IPubSub): IPubSubReturn {
       channels[channel] = [];
     }
 
-    channels[channel].forEach(( channel: any ) => {
-      channel(payload);
+    channels[channel].forEach(( ch: any ) => {
+      ch(payload);
     });
   }
 
   // Sub to a channel
-  function sub(channel = "/", pubFn: IPubSubChannelFn) {
+  function sub(channel = "/", pubFn: PubSubChannelFn) {
     if (!pubFn || typeof pubFn !== "function") {
       throw new Error("Event listener for a subscriber cannot be null");
     }

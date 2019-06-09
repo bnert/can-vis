@@ -7,6 +7,7 @@ body {
     background: #fafafa;
     font-family: "Helvetica Neue", arial, sans-serif;
     font-weight: 400;
+    font-size: 16px;
     color: #444;
     background: rgb(63, 63, 63);
     -webkit-font-smoothing: antialiased;
@@ -19,7 +20,7 @@ body {
 
 body {
     align-items: center;
-    display: flex;
+    display: block;
     justify-content: center;
     height: 100%;
 }
@@ -27,92 +28,98 @@ body {
 /* General Purpose Styles */
 
 .led-btn {
-  cursor: pointer;
-  border: none;
-  border-radius: 0.4rem;
-  outline: none;
-  transition: 0.0001s; /* Makes it slightly more realistic*/
+    cursor: pointer;
+    border: none;
+    border-radius: 0.4rem;
+    outline: none;
+    transition: 0.0001s; /* Makes it slightly more realistic*/
 }
 
 .led-btn--active {
-  opacity: 1;
+    opacity: 1;
 }
 
 .led-btn--inactive {
-  opacity: 0.6;
+    opacity: 0.6;
+}
+
+.app {
+    display: flex;
+    flex-direction: row;
 }
 
 /* Mixer Components */
 
 .app-mixer {
-  display: grid;
-  align-items: center;
-  grid-template-rows: repeat(4, 1fr);
-  width: 12rem;
+    display: grid;
+    align-items: center;
+    grid-template-rows: repeat(4, 1fr);
+    width: 12rem;
 }
 
 .app-mixer__channel {
-  align-items: center;
-  display: grid;
-  grid-template-columns: 9fr 1fr;
-  height: 100%;
-  width: 100%;
+    align-items: center;
+    display: grid;
+    grid-template-columns: 9fr 1fr;
+    height: 100%;
+    width: 100%;
 }
 
 /* CSS Tricks article helped with the styling:
     https://css-tricks.com/styling-cross-browser-compatible-range-inputs-css/
 */
 .mixer-channel__slider {
-  -webkit-appearance: none;
-  background: rgb(91, 91, 91);
-  border-radius: .4rem;
-  border: none;
-  box-shadow: inset 0px 3px 4px rgba(0, 0, 0, 0.2);
-  height: .8rem;
-  outline: none;
-  width: 95%;
+    -webkit-appearance: none;
+    background: rgb(91, 91, 91);
+    border-radius: 0.4rem;
+    border: none;
+    box-shadow: inset 0px 3px 4px rgba(0, 0, 0, 0.2);
+    height: 0.8rem;
+    outline: none;
+    width: 95%;
+    min-width: 8rem;
 }
 
 .mixer-channel__slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 6rem;
-  width: 2rem;
-  outline: none;
-  background: url('../assets/svg/vertical-slider.svg') no-repeat;
-  background-size: cover;
-  box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
-  cursor: col-resize;
+    -webkit-appearance: none;
+    height: 9rem;
+    width: 2.4rem;
+    outline: none;
+    background: url("../assets/svg/vertical-slider.svg") no-repeat;
+    background-size: contain;
+    box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
+    cursor: col-resize;
 }
 
 .mixer-channel__slider::-moz-range-thumb {
-  height: 6rem;
-  width: 2rem;
-  outline: none;
-  border: none;
-  background: url('../assets/svg/vertical-slider.svg') no-repeat;
-  background-size: contain;
-  box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
-  cursor: col-resize;
+    height: 9rem;
+    width: 2.4rem;
+    outline: none;
+    border: none;
+    background: url("../assets/svg/vertical-slider.svg") no-repeat;
+    background-size: contain;
+    box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
+    cursor: col-resize;
 }
 /* ~~~ */
 
 .mixer-channel__mute-btn {
-  display: inline-block;
-  height: 11rem;
-  width: 1.4rem;
-  margin: 0px;
+    display: inline-block;
+    height: 11rem;
+    width: 1.4rem;
+    margin: 0px;
 }
 
 /* Canvas Component / Sub Components */
 .app-canvas {
-  display: flex;
-  flex-direction: row;
+    display: flex;
+    flex-direction: row;
 }
 
 .app-canvas__canvas {
-  background: rgb(91, 91, 91);
-  border-radius: 0.4rem;
-  box-shadow: inset 0px 3px 4px rgba(0, 0, 0, 0.2);
+    background: rgb(91, 91, 91);
+    border-radius: 0.4rem;
+    box-shadow: inset 0px 3px 4px rgba(0, 0, 0, 0.2);
 }
 
 .canvas-button__container {
@@ -123,57 +130,89 @@ body {
 }
 
 .canvas-button {
-  display: block;
-  margin: 0 .3rem;
-  width: 11rem;
-  height: 11rem;
+    display: block;
+    margin: 0 0.3rem;
+    width: 11rem;
+    height: 11rem;
 }
 
 .canvas-controls {
-  display: grid;
-  grid-template-rows: 6fr 4fr;
-  margin: 0 1rem;
-  width: 8rem;
+    display: grid;
+    grid-template-rows: 6fr 4fr;
+    margin: 0 0.3rem;
+    width: 10rem;
 }
 
 .canvas-controls__tempo-slider {
-  display: inline-block;
-  height: 90%;
-  background: rgb(91, 91, 91);
-  border-radius: .4rem;
-  -webkit-appearance: slider-vertical;
-  /* -webkit-appearance: none; */
+    box-shadow: inset 3px 0px 4px rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    background: rgb(91, 91, 91);
+    border-radius: 0.4rem;
+    height: 0.8rem;
+    outline: none;
+    width: 24rem;
+    transform: translate(-30%, 12rem) rotate(90deg);
+    -webkit-appearance: none;
 }
 
+.canvas-controls__tempo-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 2.6rem;
+    width: 9rem;
+    outline: none;
+    background: url("../assets/svg/horizontal-slider.svg") no-repeat center
+        center;
+    background-size: contain;
+    box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
+    cursor: row-resize;
+    transform: rotate(270deg);
+}
+
+.canvas-controls__tempo-slider::-moz-range-thumb {
+    border: none;
+    height: 2.6rem;
+    width: 9rem;
+    outline: none;
+    background: url("../assets/svg/horizontal-slider.svg") no-repeat center
+        center;
+    background-size: contain;
+    box-shadow: 0px 3px 4px rgba(0, 0, 0, 0.2);
+    cursor: row-resize;
+    transform: rotate(270deg);
+}
 
 .canvas-controls__play-pause {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    width: inherit;
 }
 
 .play-pause__btn {
-  cursor: pointer;
-  border: none;
-  border-bottom: 3px solid #2b2b2b;
-  border-radius: .4rem;
-  height: 45%;
-  outline: none;
-  width: 100%;
-  transition: .01s;
+    cursor: pointer;
+    border: none;
+    border-bottom: 3px solid #2b2b2b;
+    border-radius: 0.4rem;
+    height: 45%;
+    outline: none;
+    width: 100%;
+    transition: 0.01s;
 }
 
 .play-pause__btn:active {
-  border-bottom: 1px solid #2b2b2b;
+    border-bottom: 1px solid #2b2b2b;
 }
 
 .play-pause__play {
-  background: #3C3C3C url('../assets/svg/play-button.svg') no-repeat center center;
-  background-size: cover;
+    background: #3c3c3c url("../assets/svg/play-button.svg") no-repeat center
+        center;
+    background-size: cover;
 }
 
 .play-pause__stop {
-  background: #3C3C3C url('../assets/svg/stop-button.svg') no-repeat center center;
-  background-size: cover;
+    background: #3c3c3c url("../assets/svg/stop-button.svg") no-repeat center
+        center;
+    background-size: cover;
+    margin-top: 0.3rem;
 }

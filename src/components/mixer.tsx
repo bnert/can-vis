@@ -8,8 +8,9 @@ import MixerChannel from './mixer-channel';
  * Initializes an object which will hold values for interfacing
  * with an audio node.
  * 
- * @param channelNumber -> what to call a channel (used for html)
- * @param name -> this will be how we call the channel in code
+ * @param {number} channelNumber -> what to call a channel (used for html)
+ * @param {string} name -> this will be how we call the channel in code
+ * @returns {object} object which contains channel info
  */
 const channelFactory = (channelNumber: number, name: string) => {
   return {
@@ -24,10 +25,13 @@ const channelFactory = (channelNumber: number, name: string) => {
 }
 
 /**
+ * Factory function for producing default Audio Node Settings 
+ * @param {AudioContext} audioContext -> current audion context, hosted as class attribute
+ * @param {string} waveType -> one of four (sine, triangle, square, saw)
+ * @param {number} initFreq -> initial frequency
  * 
- * @param audioContext -> current audion context, hosted as class attribute
- * @param waveType -> one of four (sine, triangle, square, saw)
- * @param initFreq -> initial frequency
+ * @returns {object} This object contains an audioNode instance used
+ * for initialization.
  */
 const defaultAudioNodeSettings = (
   audioContext: AudioContext, 
@@ -104,11 +108,12 @@ export default class AudioMixer extends Component<any, any> {
     // Grab the sent color from each frequency and funnel into
     // updating the oscillator node
     Object.entries(freqData).forEach(([ color, freq ]) => {
-      if(this.channels[color].node){
-        if(freq && typeof freq === 'number'){
-
-          this.channels[color].node.updateFreq(freq, this.audioCtx.currentTime);
-        }
+      if(
+          this.channels[color].node
+          && freq
+          && typeof freq === 'number'
+        ){
+         this.channels[color].node.updateFreq(freq, this.audioCtx.currentTime);
       }
     })
   }
@@ -122,13 +127,15 @@ export default class AudioMixer extends Component<any, any> {
       this.audioCtx.resume();
     }
     Object.values(this.channels).forEach(({ node, audioAttrs }: any) => {
-      if(node && !node.started()) {
-        node.start();
-        audioAttrs.muted ?
-          node.mute() :
-          null; // Want to keep it playing
+      if(!node || node.started()){
+        return;
       }
-    })
+      node.start();
+      if(!audioAttrs.muted) {
+         return; 
+      }
+      node.mute();
+    });
   }
 
   // This fuction is mainly implemented as a
@@ -216,8 +223,9 @@ export default class AudioMixer extends Component<any, any> {
           gridTemplateRows: 'repeat(4, 1fr)'
         }}
       >
-        {Object.entries(this.channels).map(channel => {
+        {Object.entries(this.channels).map((channel: any, index: number) => {
           return <MixerChannel
+            key={index}
             // Values  
             channelName={channel[0]}
             {...channel[1]} 

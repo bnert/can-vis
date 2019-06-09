@@ -12,21 +12,21 @@ const store = {
   },
 }
 
-interface CanvasMeta {
+interface ICanvasMeta {
   height: number;
   width: number;
 }
 
-interface Props{
+interface IProps{
   id: string;
-  canvas: CanvasMeta;
+  canvas: ICanvasMeta;
   audioContext: AudioContext;
   colorWaveTypeMap: any;
   pubFn(channel: string, payload: any): void;
   subFn(channel: string, payload: any): void;
 }
 
-export default class Canvas extends Component<Props> {
+export default class Canvas extends Component<IProps> {
   public audioSchedulerWorker = new Worker('../workers/audioSchedulerWorker.js');
   public state = {
     mouseDown: false
@@ -46,7 +46,7 @@ export default class Canvas extends Component<Props> {
 
   private ctx: any;
 
-  /** ~ Event Handlers ~ **/
+  /*~* Event Handlers *~*/
 
   public handleColorChange = (newCurrent: any) => {
     this.colorWaveTypeMap.current = newCurrent;
@@ -70,14 +70,14 @@ export default class Canvas extends Component<Props> {
     }
   }
 
-  /** ~ Utilities ~ **/
+  /*~* Utilities *~*/
 
-  rgba(rgbaObject: any) {
+  public rgba = (rgbaObject: any) => {
     const { r, g, b, a }: any = rgbaObject;
     return `rgba(${r}, ${g}, ${b}, ${a})`
   }
 
-  paint = (x: number, y: number) => {
+  public paint = (x: number, y: number) => {
     if(!this.ctx) { return; }
 
     const { current }: any = this.colorWaveTypeMap;
@@ -87,7 +87,7 @@ export default class Canvas extends Component<Props> {
     this.ctx.stroke();
   }
 
-  startAudioWorker = () => {
+  public startAudioWorker = () => {
     // Tells the web worker to poll
     // the canvas for data and start
     // scheduling bits to send to mixer
@@ -97,7 +97,7 @@ export default class Canvas extends Component<Props> {
     })
   }
 
-  stopAudioWorker = () => {
+  public stopAudioWorker = () => {
     // Need to send the signal to
     // cancel current scheduled timeouts
     this.audioSchedulerWorker.postMessage({
@@ -106,7 +106,7 @@ export default class Canvas extends Component<Props> {
     })
   }
 
-  updateSamplingFrequency = (newSamplingFreq: number) => {
+  public updateSamplingFrequency = (newSamplingFreq: number) => {
     this.audioSchedulerWorker.postMessage({
       action: 'UPDATE_SAMPFREQ',
       payload: {
@@ -115,7 +115,7 @@ export default class Canvas extends Component<Props> {
     })
   }
 
-  updateAudioFreq = (payload: any) => {
+  public updateAudioFreq = (payload: any) => {
     // Payload is of the format:
     // { 'color-fmt-string': newFreqValue, ... }
     this.props.pubFn('mixerEvent', { 
@@ -124,7 +124,7 @@ export default class Canvas extends Component<Props> {
     })
   }
 
-  /** ~ Lifecycle methods ~ **/
+  /*~* Lifecycle methods *~*/
 
   public componentDidMount() {
 
@@ -187,7 +187,7 @@ export default class Canvas extends Component<Props> {
     return false;
   }
 
-  public render({ id, canvas, colorWaveTypeMap }: Props) {
+  public render({ id, canvas, colorWaveTypeMap }: IProps) {
     return (
       <div
         className={`app-canvas`}
@@ -197,11 +197,12 @@ export default class Canvas extends Component<Props> {
         >
           {Object.values(colorWaveTypeMap).map((el: any, index: number) => {
             return <CanvasButton
+              key={index}
               value={el.waveType}
               waveType={el.waveType}
               bgRgba={el.rgba}
               active={index === 0 ? true : false}
-              onClick={this.handleColorChange}
+              clickHandler={this.handleColorChange}
               pubFn={this.props.pubFn}
               subFn={this.props.subFn}
             />
@@ -217,7 +218,7 @@ export default class Canvas extends Component<Props> {
           onMouseDown={this.handleMouseDown}
           onMouseUp={this.handleMouseUp}
           onMouseMove={this.handleMouseMove}
-        ></canvas>
+        />
         <div
           className={`canvas-controls`}
           // style={{
@@ -227,7 +228,8 @@ export default class Canvas extends Component<Props> {
         >
           <input
             className={`canvas-controls__tempo-slider`}
-            orient="vertical" // Only for Firefox, gives error
+            /* tslint:disable-next-line */
+            // orient="vertical" // Only for Firefox, gives error
             type="range" 
             min="0" 
             max="1" 
@@ -248,7 +250,7 @@ export default class Canvas extends Component<Props> {
                 this.props.pubFn('mixerEvent', { action: 'INIT_OSC' });
                 this.startAudioWorker();
               }}
-            ></button>
+            />
             <button 
               className={`play-pause__btn play-pause__stop`}
               onClick={() => {
@@ -256,7 +258,7 @@ export default class Canvas extends Component<Props> {
                 this.props.pubFn('mixerEvent', { action: 'CTX_SUSPEND' });
                 this.stopAudioWorker();
               }}
-            ></button>
+            />
           </div>
         </div>
       </div>

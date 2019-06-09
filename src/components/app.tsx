@@ -14,7 +14,7 @@ if ((module as any).hot) {
 // from the data sent back by the worker,
 // compare the keys of object against each
 // color value (rgb) rounded to the tenth
-let colorWaveTypeMap = {
+const colorWaveTypeMap = {
   sine: {
     waveType: 'sine',
     rgba: {
@@ -55,37 +55,30 @@ let colorWaveTypeMap = {
 
 
 export default class App extends Component {
-    public currentUrl?: string;
-    public handleRoute = (e: RouterOnChangeArgs) => {
-        this.currentUrl = e.url;
-    };
-
     // Application constants
-    maxFreq: number = 6000;
+    
+    public maxFreq: number = 6000;
     // Kind of arbitrary sizes... for now
-    canvasWidth: number = 1080;
-    canvasHeight: number = 720;
+    public canvasWidth: number = 1080;
+    public canvasHeight: number = 720;
 
     /** 
      * One thing that needs to be made available to both
      * the canvas and the audio worker, is the audio context
+     * need to classify as any, bcs of TS compiler not having up to date types
      */
-    audioCtx: AudioContext | any = new (window.AudioContext || window.webkitAudioContext)();
+    protected audioCtx: any = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
 
     /** 
      * Instantiate a new pubsub buss for updates 
      * across components
-    */
-    ps = pubsub();
+     */
+    protected ps = pubsub();
 
     public render() {
       return (
         <div
           className={`app app-container`}
-          style={{
-            display: 'flex',
-            flexDirection: 'row'
-          }}
         >
           <Mixer 
             audioContext={this.audioCtx}

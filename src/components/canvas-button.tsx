@@ -4,20 +4,20 @@ interface ISelectButtonProps {
   value: string;
   waveType: string;
   active: boolean;
-  bgRgba: {};
-  onClick(any: any): void;
-  pubFn: any;
-  subFn: any;
+  bgRgba: any;
+  clickHandler(event: any): void;
+  pubFn(channel: string, payload: any): void;
+  subFn(channel: string, payloadFn: any): void;
 }
 
 export default class CanvasButton extends Component<ISelectButtonProps> {
-  state = {
+  public state = {
     active: this.props.active
   }
 
-  cName = 'canvas-button';
+  private cName = 'canvas-button';
 
-  componentDidMount() {
+  public componentDidMount() {
     this.props.subFn('canvasButtons', ({ action }: any) => {
       if(action !== `SET_INACTIVE-${this.props.waveType}`) {
         this.setState({ active: false });
@@ -25,7 +25,7 @@ export default class CanvasButton extends Component<ISelectButtonProps> {
     });
   }
 
-  render(props: ISelectButtonProps, state: any) {
+  public render(props: ISelectButtonProps, state: any) {
     const { r, g, b, a }: any = props.bgRgba;
     return <button
       id={`canvas-button__${props.waveType}`}
@@ -43,13 +43,13 @@ export default class CanvasButton extends Component<ISelectButtonProps> {
       }}
 
       onClick={() => {
-        this.props.onClick({
+        this.props.clickHandler({
           waveType: props.waveType,
           rgba: props.bgRgba
         })
         this.setState({ active: true });
         this.props.pubFn('canvasButtons', { action: `SET_INACTIVE-${this.props.waveType}`});
       }}
-    ></button>
+    />
   }
 }
