@@ -1,9 +1,5 @@
 # can-vis
 
-## By: Brent Daniels-Soles
-## For: CS 410: Sound & Music w/ Bart Massey
-## Term: Spring 2019
-
 ## CLI Commands ~ From preact cli
 *   `npm install`: Installs dependencies -> RUN THIS FIRST
 
